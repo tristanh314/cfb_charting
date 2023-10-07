@@ -1,3 +1,5 @@
+import odswriter
+import data_to_excel
 import numpy as np
 import pandas as pd
 
@@ -20,3 +22,10 @@ while i <= game_data.shape[0]:
 # Sort play data by team on offense.
 primary_off = game_data.loc[game_data['Offense']=='Utah']
 secondary_off = game_data.loc[game_data['Offense']=='Florida']
+
+# row = [5,'UTH',1,'O']
+
+# Experiment with excel files
+df = pd.DataFrame([['=SUM(1,1)','=SUM(A2+1)'],['=SUM(1,1)','=A3-1']], columns=['Foo','Bar'])
+with pd.ExcelWriter("experiment.xlsx") as writer:
+    df.to_excel(writer)
