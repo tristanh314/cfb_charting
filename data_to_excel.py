@@ -9,10 +9,14 @@ game_data = game_data.drop(columns=['Id','Offense Conference','Defense Conferenc
 
 i=1
 while i <= game_data.shape[0]:
-    if "Kickoff" in game_data.loc[i,'Play Type']:
+    if 'Kickoff' in game_data.loc[i,'Play Type']:
+        game_data=game_data.drop(index=i)
+    elif 'Punt' in game_data.loc[i, 'Play Type']:
+        game_data=game_data.drop(index=i)
+    elif 'Field Goal' in game_data.loc[i, 'Play Type']:
         game_data=game_data.drop(index=i)
     i+=1
-    
 
-# home_off = game_data.loc[game_data['Offense']=='Utah']
-# home_def = game_data.loc[game_data['Defense']=='Utah']
+# Sort play data by team on offense.
+primary_off = game_data.loc[game_data['Offense']=='Utah']
+secondary_off = game_data.loc[game_data['Offense']=='Florida']
