@@ -17,7 +17,7 @@ while i <= game_data.shape[0]:
         game_data=game_data.drop(index=i)
     elif 'Timeout' in game_data.loc[i]['Play Type']:
         game_data=game_data.drop(index=i)
-    elif 'End of' in game_data.loc[i]['Play Type']:
+    elif 'End' in game_data.loc[i]['Play Type']:
         game_data=game_data.drop(index=i)
     i+=1
 
