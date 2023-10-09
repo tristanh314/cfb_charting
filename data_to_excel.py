@@ -21,8 +21,9 @@ while i <= game_data.shape[0]:
         game_data=game_data.drop(index=i)
     i+=1
 
-# Create play type data
-def abbrev(string):
+# Functions to format information not in the raw stats
+# Make play abreviations
+def abrev(string):
     if 'Pass' in string:
         return 'p'
     elif 'Rush' in string:
@@ -30,7 +31,16 @@ def abbrev(string):
     else:
         return '?'
 
-abreviations = game_data['Play Type'].apply(abbrev)
+# Check for touchdowns or penalties
+def is_td(dataframe, index):
+    if 'Touchdown' in dataframe[index]['Play Type']:
+        return 't'
+    elif 'Penalty' in dataframe[index]['Play Type'] and dataframe[index]['Down'] == 1 and dataframe[index-1]['Down']:
+        return 'x'
+    else:
+        return ''
+
+abreviations = game_data['Play Type'].apply(abrev)
 game_data['Play Abrev'] = abreviations
 # Sort play data by team on offense.
 primary_off = game_data.loc[game_data['Offense']=='Utah'].reset_index().drop(columns='index')
@@ -38,7 +48,18 @@ secondary_off = game_data.loc[game_data['Offense']=='Florida'].reset_index().dro
 
 # Not ready for prime time
 primary_array=np.array([
-    [5,'UTH',1,'O',primary_off.loc[0]['Down'],primary_off.loc[0]['Distance'],]
+    [5, #A
+     'UTH',#B
+     1,#C
+     'O',#D
+     primary_off.loc[0]['Down'],#E
+     primary_off.loc[0]['Distance'],#F
+     primary_off[0]['Play Abrev'],#G
+     '',#H
+     1,#I
+     1,#J
+     is_td(primary_off,0),#
+     ]
     ])
 # for i in [1,primary_off.size[0]]:
 #     row = [5,'UTH',i,'O']
