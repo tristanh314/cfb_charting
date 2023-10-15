@@ -46,7 +46,7 @@ game_data['Play Abrev'] = abreviations
 primary_off = game_data.loc[game_data['Offense']=='Utah'].reset_index().drop(columns='index')
 secondary_off = game_data.loc[game_data['Offense']=='Florida'].reset_index().drop(columns='index')
 
-# Not ready for prime time
+# Create the array of values
 primary_array=np.array([
     [5, #A
      'UTH',#B
@@ -58,7 +58,54 @@ primary_array=np.array([
      '',#H
      1,#I
      1,#J
-     is_td(primary_off,0),#
+     is_td(primary_off,0),#K
+     '',#L
+     '',#M
+     '',#N
+     '',#O
+     '',#P
+     '',#Q
+     '',#R
+     '',#S
+     '',#T
+     '',#U
+     '',#V
+     '',#W
+     '',#X
+     '',#Y
+     '',#Z
+     '',#AA
+     '',#AB
+     '',#AC
+     '',#AD
+     '',#AE
+     np.NaN,#AF
+     '',#AG
+     '',#AH
+     '',#AI
+     '',#AJ
+     '',#AK
+     '',#AL
+     '',#AM
+     primary_off.loc[0]['Offense Score'],#AN
+     primary_off.loc[0]['Defense Score'],#AO
+    '',#AP
+    primary_off.loc[0]['Period'],#AQ
+    primary_off.loc[0]['Clock Minutes'],#AR
+    primary_off.loc[0]['Clock Seconds'],#AS
+    primary_off.loc[0]['Yards To Goal'],#AT
+    '',#Au
+    primary_off.loc[0]['Yards Gained'],#AV
+    primary_off.loc[0]['Play Type'],#AW
+    primary_off.loc[0]['Play Text'],#AX
+    '',#AY
+    '',#AZ
+    '',#BA
+    '',#BB
+    '',#BC
+    '',#BD
+    '',#BE
+    '',#BF
      ]
     ])
 # for i in [1,primary_off.size[0]]:
