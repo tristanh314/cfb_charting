@@ -148,7 +148,7 @@ with ods.writer(open(file_name,'wb')) as file:
                 1,#C
                 'O',#D
                 down_string(primary_off.loc[index]['Down']),#E
-                primary_off.loc[index]['Distance'],#F
+                int(primary_off.loc[index]['Distance']),#F
                 primary_off.loc[index]['Play Abrev'],#G
                 f'=IF(E{line}="","",IF(K{line}="x","d",IF(K{line}="p","d",IF(AJ{line}="o","o",IF(E{line}="1st",AK{line},IF(E{line}="2nd",AL{line},AJ{line}))))))',#H
                 '1',#I
@@ -209,7 +209,7 @@ with ods.writer(open(file_name,'wb')) as file:
                 f'=IF(A{line-1}=A{line},C{line-1}+1,1)',#C
                 'O',#D
                 down_string(primary_off.loc[index]['Down']),#E
-                primary_off.loc[index]['Distance'],#F
+                int(primary_off.loc[index]['Distance']),#F
                 primary_off.loc[index]['Play Abrev'],#G
                 f'=IF(E{line}="","",IF(K{line}="x","d",IF(K{line}="p","d",IF(AJ{line}="o","o",IF(E{line}="1st",AK{line},IF(E{line}="2nd",AL{line},AJ{line}))))))',#H
                 '1',#I
@@ -270,7 +270,7 @@ with ods.writer(open(file_name,'wb')) as file:
                 f'=IF(A{line-1}=A{line},C{line-1}+1,1)',#C
                 'O',#D
                 down_string(primary_off.loc[index]['Down']),#E
-                primary_off.loc[index]['Distance'],#F
+                int(primary_off.loc[index]['Distance']),#F
                 primary_off.loc[index]['Play Abrev'],#G
                 f'=IF(E{line}="","",IF(K{line}="x","d",IF(K{line}="p","d",IF(AJ{line}="o","o",IF(E{line}="1st",AK{line},IF(E{line}="2nd",AL{line},AJ{line}))))))',#H
                 f'=IF(C{line}=1,1,IF(E{line}="","",IF(I{line-1}="",I{line-2}+1,I{line-1})))',#I
@@ -404,7 +404,7 @@ with ods.writer(open(file_name,'wb')) as file:
                 1,#C
                 'ddd',#D
                 down_string(secondary_off.loc[index]['Down']),#E
-                secondary_off.loc[index]['Distance'],#F
+                int(secondary_off.loc[index]['Distance']),#F
                 secondary_off.loc[index]['Play Abrev'],#G
                 f'=IF(E{line}="","",IF(K{line}="x","d",IF(K{line}="p","d",IF(AJ{line}="o","o",IF(E{line}="1st",AK{line},IF(E{line}="2nd",AL{line},AJ{line}))))))',#H
                 '1',#I
@@ -465,7 +465,7 @@ with ods.writer(open(file_name,'wb')) as file:
                 f'=IF(A{line-1}=A{line},C{line-1}+1,1)',#C
                 'ddd',#D
                 down_string(secondary_off.loc[index]['Down']),#E
-                secondary_off.loc[index]['Distance'],#F
+                int(secondary_off.loc[index]['Distance']),#F
                 secondary_off.loc[index]['Play Abrev'],#G
                 f'=IF(E{line}="","",IF(K{line}="x","d",IF(K{line}="p","d",IF(AJ{line}="o","o",IF(E{line}="1st",AK{line},IF(E{line}="2nd",AL{line},AJ{line}))))))',#H
                 '1',#I
@@ -526,7 +526,7 @@ with ods.writer(open(file_name,'wb')) as file:
                 f'=IF(A{line-1}=A{line},C{line-1}+1,1)',#C
                 'ddd',#D
                 down_string(secondary_off.loc[index]['Down']),#E
-                secondary_off.loc[index]['Distance'],#F
+                int(secondary_off.loc[index]['Distance']),#F
                 secondary_off.loc[index]['Play Abrev'],#G
                 f'=IF(E{line}="","",IF(K{line}="x","d",IF(K{line}="p","d",IF(AJ{line}="o","o",IF(E{line}="1st",AK{line},IF(E{line}="2nd",AL{line},AJ{line}))))))',#H
                 f'=IF(C{line}=1,1,IF(E{line}="","",IF(I{line-1}="",I{line-2}+1,I{line-1})))',#I
