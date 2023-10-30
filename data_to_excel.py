@@ -4,15 +4,15 @@ import odswriter as ods
 
 ############# USER INPUT REQUIRED #############
 # INPUT RELATIVE PATH TO RAW DATA
-game_data = pd.read_csv('utah_cal_raw.csv')
+game_data = pd.read_csv('cal_ors_raw.csv')
 # INPUT RELATIVE PATH TO DESTINATION FILE
-file_name = "UTH_CAL_TH.ods"
+file_name = "CAL_ORS_TH.ods"
 # SPECIFY NAMES AND ABBREVIATIONS TO USE.
 game_num = 5
-prime_team = "Utah"
-sec_team = "California"
-prime_abrev = "UTH"
-sec_abrev  = "CAL"
+prime_team = "California"
+sec_team = "Oregon State"
+prime_abrev = "CAL"
+sec_abrev  = "ORS"
 ######### DID YOU CHECK YOUR CHOICES? #########
 
 # Remove information that will not be used.
