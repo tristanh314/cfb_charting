@@ -4,22 +4,23 @@ import odswriter as ods
 
 ############# USER INPUT REQUIRED #############
 # INPUT RELATIVE PATH TO RAW DATA
-game_data = pd.read_csv('cal_ors_raw.csv')
+game_data = pd.read_csv('asu_wsu_raw.csv')
 # INPUT RELATIVE PATH TO DESTINATION FILE
-file_name = "CAL_ORS_TH.ods"
+file_name = "ASU_WSU_TH.ods"
 # SPECIFY NAMES AND ABBREVIATIONS TO USE.
 game_num = 5
-prime_team = "California"
-sec_team = "Oregon State"
-prime_abrev = "CAL"
-sec_abrev  = "ORS"
+prime_team = "Arizona State"
+sec_team = "Washington State"
+prime_abrev = "ASU"
+sec_abrev  = "WSU"
 ######### DID YOU CHECK YOUR CHOICES? #########
 
 # Remove information that will not be used.
 game_data = game_data.drop(columns=['Id','Offense Conference','Defense Conference','Home','Away','Game Id','Drive Id','Offense Timeouts','Defense Timeouts','Yard Line','Ppa','Wallclock'])
 
 i=0
-while i < game_data.shape[0]:
+frame_length=game_data.shape[0]
+while i < frame_length:
     if 'Kickoff' in game_data.loc[i]['Play Type']:
         game_data=game_data.drop(index=i)
     elif 'Punt' in game_data.loc[i]['Play Type']:
