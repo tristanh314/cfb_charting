@@ -142,3 +142,13 @@ while index < secondary_off.shape[0]:
 
 # Save the modified workbook as .xlsx
 wb.save('experiment.xlsx')
+
+# Make a function for ease of inormation entry.
+def chart_data(raw_data, template):
+    """
+    Input: 
+        raw_data = .csv file of play data from https://collegefootballdata.com/exporter/plays for a single game
+        template = relative path to the .xlsx file with formulas ready for data entry
+    Output:
+        None. An xlsx file will be created in the working directory that is the template provided with the 
+    """
