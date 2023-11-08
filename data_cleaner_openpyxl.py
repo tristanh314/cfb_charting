@@ -107,5 +107,38 @@ while index < primary_off.shape[0]:
 #   Iterate the index 
     index+=1
 
+#Enter data for secondary offense 
+ws = wb['SEC Off, PRIME Def']
+ws.title = f'{sec_abrev} Offense, {prime_abrev} Offense'
+index = 0
+t_row = 1
+# print(ws)
+while index < secondary_off.shape[0]:
+    row = secondary_off.iloc[index]
+    ws[f'A{t_row}']=game_num
+    ws[f'B{t_row}']=prime_abrev
+    ws[f'D{t_row}']='ddd'
+    ws[f'E{t_row}']=down_string(int(row['Down']))
+    ws[f'F{t_row}']=int(row['Distance'])
+    ws[f'G{t_row}']=row['Play Abrev']
+    ws[f'AN{t_row}']=int(row['Offense Score'])
+    ws[f'AO{t_row}']=int(row['Defense Score'])
+    ws[f'AQ{t_row}']=int(row['Period'])
+    ws[f'AR{t_row}']=int(row['Clock Minutes'])
+    ws[f'AS{t_row}']=int(row['Clock Seconds'])
+    ws[f'AT{t_row}']=int(row['Yards To Goal'])
+    ws[f'AV{t_row}']=int(row['Yards Gained'])
+    ws[f'AW{t_row}']=row['Play Type']
+    ws[f'AX{t_row}']=row['Play Text']
+#   Skip rows in necessary
+    if index == secondary_off.shape[0]-1:
+        pass
+    elif secondary_off.loc[index]['Drive Number'] != secondary_off.loc[index+1]['Drive Number']:
+        t_row+=2
+    else:
+        t_row+=1
+#   Iterate the index 
+    index+=1
+
 # Save the modified workbook as .xlsx
 wb.save('experiment.xlsx')
