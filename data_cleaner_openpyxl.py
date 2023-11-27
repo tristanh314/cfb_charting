@@ -4,15 +4,15 @@ import openpyxl as op
 
 ############# USER INPUT REQUIRED #############
 # INPUT RELATIVE PATH TO RAW DATA
-game_data = pd.read_csv('asu_wsu_raw.csv')
+game_data = pd.read_csv('was_uth_raw.csv')
 # INPUT RELATIVE PATH TO DESTINATION FILE
-file_name = "ASU_WSU_TH.ods"
+file_name = "WAs_UTH_TH.ods"
 # SPECIFY NAMES AND ABBREVIATIONS TO USE.
 game_num = 5
-prime_team = "Arizona State"
-sec_team = "Washington State"
-prime_abrev = "ASU"
-sec_abrev  = "WSU"
+prime_team = "Washington"
+sec_team = "Utah"
+prime_abrev = "WAS"
+sec_abrev  = "UTH"
 ######### DID YOU CHECK YOUR CHOICES? #########
 
 # Remove information that will not be used.
@@ -141,14 +141,14 @@ while index < secondary_off.shape[0]:
     index+=1
 
 # Save the modified workbook as .xlsx
-wb.save('experiment.xlsx')
+wb.save(file_name)
 
 # Make a function for ease of inormation entry.
-def chart_data(raw_data, template):
-    """
-    Input: 
-        raw_data = .csv file of play data from https://collegefootballdata.com/exporter/plays for a single game
-        template = relative path to the .xlsx file with formulas ready for data entry
-    Output:
-        None. An xlsx file will be created in the working directory that is the template provided with the 
-    """
+# def chart_data(raw_data, template):
+#     """
+#     Input: 
+#         raw_data = .csv file of play data from https://collegefootballdata.com/exporter/plays for a single game
+#         template = relative path to the .xlsx file with formulas ready for data entry
+#     Output:
+#         None. An xlsx file will be created in the working directory that is the template provided with the 
+#     """
