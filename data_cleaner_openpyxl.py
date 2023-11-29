@@ -4,15 +4,15 @@ import openpyxl as op
 
 ############# USER INPUT REQUIRED #############
 # INPUT RELATIVE PATH TO RAW DATA
-game_data = pd.read_csv('was_uth_raw.csv')
+game_data = pd.read_csv('uw_stan_raw.csv')
 # INPUT RELATIVE PATH TO DESTINATION FILE
-file_name = "WAs_UTH_TH.ods"
+file_name = "WAS_FD_TH.ods"
 # SPECIFY NAMES AND ABBREVIATIONS TO USE.
 game_num = 5
 prime_team = "Washington"
-sec_team = "Utah"
+sec_team = "Stanford"
 prime_abrev = "WAS"
-sec_abrev  = "UTH"
+sec_abrev  = "FD"
 ######### DID YOU CHECK YOUR CHOICES? #########
 
 # Remove information that will not be used.
