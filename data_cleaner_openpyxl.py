@@ -6,7 +6,7 @@ import openpyxl as op
 # INPUT RELATIVE PATH TO RAW DATA
 game_data = pd.read_csv('uw_stan_raw.csv')
 # INPUT RELATIVE PATH TO DESTINATION FILE
-file_name = "WAS_FD_TH.ods"
+file_name = "WAS_FD_TH.xlsx"
 # SPECIFY NAMES AND ABBREVIATIONS TO USE.
 game_num = 5
 prime_team = "Washington"
