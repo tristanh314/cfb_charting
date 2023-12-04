@@ -4,15 +4,15 @@ import openpyxl as op
 
 ############# USER INPUT REQUIRED #############
 # INPUT RELATIVE PATH TO RAW DATA
-game_data = pd.read_csv('uw_stan_raw.csv')
+game_data = pd.read_csv('lib_nms_raw.csv')
 # INPUT RELATIVE PATH TO DESTINATION FILE
-file_name = "WAS_FD_TH.xlsx"
+file_name = "LIB_NMS_TH.xlsx"
 # SPECIFY NAMES AND ABBREVIATIONS TO USE.
-game_num = 5
-prime_team = "Washington"
-sec_team = "Stanford"
-prime_abrev = "WAS"
-sec_abrev  = "FD"
+game_num = 14
+prime_team = "Liberty"
+sec_team = "New Mexico State"
+prime_abrev = "LIB"
+sec_abrev  = "NMS"
 ######### DID YOU CHECK YOUR CHOICES? #########
 
 # Remove information that will not be used.
@@ -37,6 +37,8 @@ while i < frame_length:
 # Make play abreviations
 def abrev(string):
     if 'Pass' in string:
+        return 'p'
+    elif 'Sack' in string:
         return 'p'
     elif 'Rush' in string:
         return 'r'
@@ -76,7 +78,7 @@ wb = op.load_workbook(filename = 'atq_charting_template.xlsx')
 
 #Enter data for primary offense 
 ws = wb['PRIME Off, SEC Def']
-ws.title = f'{prime_abrev} Offense, {sec_abrev} Offense'
+ws.title = f'{prime_abrev} Offense, {sec_abrev} Defense'
 index = 0
 t_row = 1
 # print(ws)
@@ -101,6 +103,9 @@ while index < primary_off.shape[0]:
     if index == primary_off.shape[0]-1:
         pass
     elif primary_off.loc[index]['Drive Number'] != primary_off.loc[index+1]['Drive Number']:
+        ws[f'A{t_row+1}']=game_num
+        ws[f'B{t_row+1}']=prime_abrev
+        ws[f'D{t_row+1}']='O'
         t_row+=2
     else:
         t_row+=1
@@ -109,7 +114,7 @@ while index < primary_off.shape[0]:
 
 #Enter data for secondary offense 
 ws = wb['SEC Off, PRIME Def']
-ws.title = f'{sec_abrev} Offense, {prime_abrev} Offense'
+ws.title = f'{sec_abrev} Offense, {prime_abrev} Defense'
 index = 0
 t_row = 1
 # print(ws)
@@ -134,6 +139,9 @@ while index < secondary_off.shape[0]:
     if index == secondary_off.shape[0]-1:
         pass
     elif secondary_off.loc[index]['Drive Number'] != secondary_off.loc[index+1]['Drive Number']:
+        ws[f'A{t_row+1}']=game_num
+        ws[f'B{t_row+1}']=prime_abrev
+        ws[f'D{t_row+1}']='ddd'
         t_row+=2
     else:
         t_row+=1
