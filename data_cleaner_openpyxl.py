@@ -4,15 +4,15 @@ import openpyxl as op
 
 ############# USER INPUT REQUIRED #############
 # INPUT RELATIVE PATH TO RAW DATA
-game_data = pd.read_csv('lib_nms_raw.csv')
+game_data = pd.read_csv('lib_wk13_raw.csv')
 # INPUT RELATIVE PATH TO DESTINATION FILE
-file_name = "LIB_NMS_TH.xlsx"
+file_name = "LIB_UTEP_TH.xlsx"
 # SPECIFY NAMES AND ABBREVIATIONS TO USE.
-game_num = 14
+game_num = 13
 prime_team = "Liberty"
-sec_team = "New Mexico State"
+sec_team = "UTEP"
 prime_abrev = "LIB"
-sec_abrev  = "NMS"
+sec_abrev  = "TEP"
 ######### DID YOU CHECK YOUR CHOICES? #########
 
 # Remove information that will not be used.
@@ -44,12 +44,10 @@ def abrev(string):
         return 'r'
     else:
         return '?'
-# Check for touchdowns or penalties
+# Check for touchdowns
 def is_td(dataframe, index):
     if 'Touchdown' in dataframe.loc[index]['Play Type']:
         return 't'
-    elif 'Penalty' in dataframe.loc[index]['Play Type'] and dataframe.loc[index]['Down'] == 1 and dataframe.loc[index-1]['Down'] == 1:
-        return 'x'
     else:
         return ''
 # Create appropriate play abbreviations
