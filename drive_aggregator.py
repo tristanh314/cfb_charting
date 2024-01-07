@@ -15,12 +15,22 @@ col_names = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q'
            'BA','BB','BC','BD','BE','BF'
 ]
 drive_data.columns=col_names
-drive_data=drive_data.where(drive_data['E']!='')
 use_data=drive_data[['A','E','F','G','H','I','J','K', 'AT','AV']]
+
+#Drop rows with no data from the original spreadsheet.
+drop_rows = []
+for i in range(0,(use_data.shape[0]-1)):
+    if use_data.iloc[i]['E'] in ['1st','2nd','3rd','4th','C']:
+        pass
+    else:
+        drop_rows+=[i]
+use_data.drop(index=drop_rows, inplace=True)
+use_data.to_csv('have_a_shufti.csv')
 # Convert numerical columns to integers for memory savings.
 cols = ['A','F','I','J','AT','AV']
 for column in cols:
     use_data[column].apply(lambda x:int(x))
+
 # Reindex dataframe for ease of aggregation.
 use_data.set_index(keys=['A','I','J'], inplace=True)
 print(use_data.head())
