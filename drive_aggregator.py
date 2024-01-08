@@ -16,21 +16,43 @@ col_names = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q'
 ]
 drive_data.columns=col_names
 
-#Drop rows with no data from the original spreadsheet.
+# Drop non-used rows, as well as two point conversions, from the original spreadsheet.
 drop_rows = []
 for i in range(0,(drive_data.shape[0]-1)):
-    if drive_data.iloc[i]['E'] in ['1st','2nd','3rd','4th','C']:
+    if drive_data.iloc[i]['E'] in ['1st','2nd','3rd','4th'] and drive_data.iloc[i]['G'] == 's':
+        drive_data.iloc[i]['G'] = 'p'
+    elif drive_data.iloc[i]['E'] in ['1st','2nd','3rd','4th'] and drive_data.iloc[i]['G'] in ['r','p']:
         pass
     else:
         drop_rows+=[i]
 use_data=drive_data[['A','E','F','G','H','I','J','K', 'AT','AV']].drop(index=drop_rows)
-# use_data.to_csv('have_a_shufti.csv')
+
+# Convert screens back to passes for simplicity.
+def scren_pass(string):
+    if string == 's':
+        return 'p'
+    else:
+        return string
+use_data['G']=use_data['G'].apply(scren_pass)
 
 # Convert numerical columns to integers for memory savings.
 cols = ['A','F','I','J','AT','AV']
 for column in cols:
     use_data[column] = use_data[column].apply(lambda x:int(x))
 
-# Reindex dataframe for ease of aggregation.
-use_data.set_index(keys=['A','I','J'], inplace=True)
-print(use_data.head())
+use_data.to_csv('have_a_shufti.csv')
+####################
+# Define a function to aggregate data for a single drive.
+df_count=use_data.groupby(['A','I','G'])['G'].count()
+print(df_count)
+
+def drive_summary(game,drive):
+    """
+    Input: An (A, I) integer pair specifying a single drive in the use_data dataframe.
+    Output: A dictionary containing the number of plays and explosive plays (runs, passing including screens, and total), drive length,
+    and if the drive ended in a touchdown.
+    """
+    drive_sum={}
+    drive_sum['Plays']=use_data[game,drive].shape[0]
+
+    return drive_sum
