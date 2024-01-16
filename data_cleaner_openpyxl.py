@@ -4,15 +4,15 @@ import openpyxl as op
 
 ############# USER INPUT REQUIRED #############
 # INPUT RELATIVE PATH TO RAW DATA
-game_data = pd.read_csv('lib_wk13_raw.csv')
+game_data = pd.read_csv('uo_2024_lib.csv')
 # INPUT RELATIVE PATH TO DESTINATION FILE
-file_name = "LIB_UTEP_TH.xlsx"
+file_name = "or_2023_game_15.xlsx"
 # SPECIFY NAMES AND ABBREVIATIONS TO USE.
-game_num = 13
-prime_team = "Liberty"
-sec_team = "UTEP"
-prime_abrev = "LIB"
-sec_abrev  = "TEP"
+game_num = 15
+prime_team = "Oregon"
+sec_team = "Liberty"
+prime_abrev = "OR"
+sec_abrev  = "LIB"
 ######### DID YOU CHECK YOUR CHOICES? #########
 
 # Remove information that will not be used.

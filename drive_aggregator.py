@@ -40,8 +40,9 @@ cols = ['A','F','I','J','AT','AV']
 for column in cols:
     use_data[column] = use_data[column].apply(lambda x:int(x))
 
-use_data.to_csv('have_a_shufti.csv')
-####################
+# use_data.to_csv('have_a_shufti.csv')
+    
+## This is still under construction ##
 # Define a function to aggregate data for a single drive.
 df_count=use_data.groupby(['A','I','G'])['G'].count()
 print(df_count)
