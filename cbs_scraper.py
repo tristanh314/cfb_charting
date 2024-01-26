@@ -1,6 +1,8 @@
 # Import Dependencies
 
 import pandas as pd
+import lxml
+import html5lib
 import re
 from bs4 import BeautifulSoup
 
@@ -31,6 +33,8 @@ def scrape_cbs(html_file):
     home_team = home_team.replace('\n', '')
     home_team = home_team.replace(' ', '')
 
-    print(f"{away_abbr}, {away_team}, {home_abbr}, {home_team}")
+    # Read the play by play tables into dataframes
+    drive_tables = pd.read_html(html_file, attrs={'class':'TableBase-table'})
+    print(drive_tables[0])
 
 scrape_cbs('20230909_IDAHO@NEVADA.html')
