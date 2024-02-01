@@ -23,36 +23,26 @@ def scrape_cbs(html_file):
     # Store html from the downloaded page as a soup object.
     page=open(html_file)
     plays_soup = BeautifulSoup(page.read(), 'html.parser')
-
-    # Scrape the name and abbreviation for the teams
-    away_info = plays_soup.find('div', class_='hud-table-cell team-name-container full away')
-    away_abbr = away_info.find('div', class_='abbr').text
-    away_abbr = away_abbr.replace('\n', '')
-    away_abbr = away_abbr.replace(' ', '')
-    away_team = away_info.find('div', class_='city').text
-    away_team = away_team.replace('\n', '')
-    away_team = away_team.replace(' ', '')    
-    
-    home_info = plays_soup.find('div', class_='hud-table-cell team-name-container full home')
-    home_abbr = home_info.find('div', class_='abbr').text
-    home_abbr = home_abbr.replace('\n', '')
-    home_abbr = home_abbr.replace(' ', '')
-    home_team = home_info.find('div', class_='city').text
-    home_team = home_team.replace('\n', '')
-    home_team = home_team.replace(' ', '')
+    page.close()
 
     # # Collect a list of drive tables.
     drive_set = plays_soup.find_all('div', id='TableBase')
 
     # # Read the information from an html drive table into a pandas dataframe.
-    drive_table = drive_set[0].find('tbody')
-    drive_plays = drive_table.find_all('tr')
-    play_row = drive_plays[0].find_all('td')
-    play_result = play_row[0].text
-    play_down_dist = play_row[1].text
+    plays_df = pd.DataFrame({'Offense':[],'Result':[],'Down_Dist':[]})
 
-    # # Determine the offense for each drive.
-    return play_result, play_down_dist
+    row_num = 0
+    for drive in range(0, len(drive_set)):
+        drive_off = find_off(drive_set[drive])
+        drive_table = drive_set[drive].find('tbody')
+        drive_plays = drive_table.find_all('tr')
+        for index in range(0, len(drive_plays)):
+            play_row = drive_plays[index].find_all('td')
+            play_result = play_row[0].text
+            play_down_dist = play_row[1].text
+            plays_df.loc[row_num] = pd.Series({'Offense':drive_off, 'Result':play_result, 'Down_Dist':play_down_dist})
+            row_num+=1
 
+    return plays_df.head()
 
 print(scrape_cbs('20230909_IDAHO@NEVADA_CBS.html'))
