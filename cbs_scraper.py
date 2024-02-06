@@ -2,6 +2,7 @@
 
 import pandas as pd
 from bs4 import BeautifulSoup
+import re
 
 def find_off(drive_table):
     """
@@ -43,6 +44,22 @@ def scrape_cbs(html_file):
             plays_df.loc[row_num] = pd.Series({'Offense':drive_off, 'Result':play_result, 'Down_Dist':play_down_dist})
             row_num+=1
 
-    return plays_df.head()
+    # Split the plays into two dataframes, one for each team.
+    ######################################################################################
+    # This will need to be refactored to allow the teams to be determined by the script. #
+    ######################################################################################
+    team_A_df = plays_df[plays_df['Offense'] == 'IDAHO']
+    team_B_df = plays_df[plays_df['Offense'] == 'NEVADA']
+    
+    return team_A_df, team_B_df
 
-print(scrape_cbs('20230909_IDAHO@NEVADA_CBS.html'))
+def parse_plays(plays_df):
+    """
+    Input: A dataframe of plays for a single team, eg, output of scrape_cbs.
+    Output: A dataframe of values that can be written to an ATQ charting template.
+    """
+    charting_df = pd.DataFrame({'E':[], 'F':[], 'G':[], 'AQ':[], 'AR':[], 'AS':[], 'AT':[], 'AV':[], 'AW':[], 'AX':[]})
+    # For each row in the input dataframe, parse the text scraped from CBS sports for result information.
+
+# Print output to test script, comment out when not needed.
+playes_df = scrape_cbs('20230909_IDAHO@NEVADA_CBS.html')[1]
