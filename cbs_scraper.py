@@ -31,7 +31,7 @@ def scrape_cbs(html_file):
     drive_set = plays_soup.find_all('div', id='TableBase')
 
     # # Read the information from an html drive table into a pandas dataframe.
-    plays_df = pd.DataFrame({'Offense':[],'Result':[],'Down_Dist':[]})
+    plays_df = pd.DataFrame({'Offense':[],'Result':[],'Down_Dist':[], 'Description':[]})
 
     row_num = 0
     for drive in range(0, len(drive_set)):
@@ -41,8 +41,9 @@ def scrape_cbs(html_file):
         for index in range(0, len(drive_plays)):
             play_row = drive_plays[index].find_all('td')
             play_result = play_row[0].text
-            play_down_dist = play_row[1].text
-            plays_df.loc[row_num] = pd.Series({'Offense':drive_off, 'Result':play_result, 'Down_Dist':play_down_dist})
+            play_desc = play_row[1].text
+            down_dist = play_row[1].find('div').text
+            plays_df.loc[row_num] = pd.Series({'Offense':drive_off, 'Result':play_result, 'Down_Dist':down_dist, 'Description':play_desc})
             row_num+=1
 
     # Split the plays into two dataframes, one for each team.
@@ -72,6 +73,6 @@ def parse_play(play):
     elif  (re.compile('\-[0-9]\s').search(play['Result'])) != None:
         row['AR'] = int(re.compile('\-[0-9]\s').search(play['Result']).group())
     
-
+    return row
 # Print output to test script, comment out when not needed.
 # drives = scrape_cbs('20230909_IDAHO@NEVADA_CBS.html')
