@@ -1,5 +1,6 @@
 # Import Dependencies
 
+import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
 import re
@@ -53,13 +54,24 @@ def scrape_cbs(html_file):
     
     return team_A_df, team_B_df
 
-def parse_plays(plays_df):
+def parse_play(play):
     """
     Input: A dataframe of plays for a single team, eg, output of scrape_cbs.
     Output: A dataframe of values that can be written to an ATQ charting template.
     """
-    charting_df = pd.DataFrame({'E':[], 'F':[], 'G':[], 'AQ':[], 'AR':[], 'AS':[], 'AT':[], 'AV':[], 'AW':[], 'AX':[]})
+
     # For each row in the input dataframe, parse the text scraped from CBS sports for result information.
+    # for index in range(0, len(plays_df)):
+    row = pd.Series({'E':'', 'F':np.NaN, 'G':'', 'AQ':np.NaN, 'AR':np.NaN, 'AS':np.NaN, 'AT':np.NaN, 'AV':np.NaN, 'AW':'', 'AX':''})
+    if (re.compile('KICKOFF').search(play['Result']) != None) or (re.compile('PUNT').search(play['Result']) != None) or (re.compile('FIELD GOAL').search(play['Result'])):
+        pass
+    elif (re.compile('NO GAIN').search(play['Result'])) != None:
+        row['AR'] = 0
+    elif  (re.compile('\+[0-9]\s').search(play['Result'])) != None:
+        row['AR'] = int(re.compile('\+[0-9]\s').search(play['Result']).group())
+    elif  (re.compile('\-[0-9]\s').search(play['Result'])) != None:
+        row['AR'] = int(re.compile('\-[0-9]\s').search(play['Result']).group())
+    
 
 # Print output to test script, comment out when not needed.
-playes_df = scrape_cbs('20230909_IDAHO@NEVADA_CBS.html')[1]
+# drives = scrape_cbs('20230909_IDAHO@NEVADA_CBS.html')
