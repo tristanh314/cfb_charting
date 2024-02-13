@@ -65,18 +65,56 @@ def parse_play(play, team):
     row = pd.Series({'E':'', 'F':np.NaN, 'G':'', 'AQ':np.NaN, 'AR':np.NaN, 'AS':np.NaN, 'AT':np.NaN, 'AV':np.NaN, 'AW':'', 'AX':''})
 
     # Determine yardage gained/lost if appropriate and and write to the output row.
-    if (re.compile('NO GAIN').search(play['Result'])) != None:
-        row['AR'] = 0
-    elif  (re.compile('\+').search(play['Result'])) != None:
-        row['AR'] = int(re.compile('[0-9]*\s').search(play['Result']).group())
+    if  (re.compile('\+').search(play['Result'])) != None:
+        row['AV'] = int(re.compile('[0-9]*\s').search(play['Result']).group())
     elif  (re.compile('\-').search(play['Result'])) != None:
-        row['AR'] = -int(re.compile('[0-9]*\s').search(play['Result']).group())
-    # Try to fiter the case below on input, keep these lines just in case.
-    # elif (re.compile('KICKOFF').search(play['Result']) != None) or (re.compile('PUNT').search(play['Result']) != None) or (re.compile('FIELD GOAL').search(play['Result']) != None):
-    #     pass
+        row['AV'] = -int(re.compile('[0-9]*\s').search(play['Result']).group())
+    elif (re.compile('No Gain').search(play['Result'])) != None:
+        row['AV'] = 0
+    elif (re.compile('Int').search(play['Result'])) != None:
+        row['AV'] = 0
+    elif (re.compile('Penalty').search(play['Result'])) != None:
+        row['AV'] = np.NaN
+        row['AW'] = 'Penalty'
+    elif (re.compile('Sack').search(play['Result'])) != None:
+        row['AV'] = int(re.compile('for \-[0-9]*').search(play['Description']).group()[4:])
+    
+    # Determine the play type.
+    if (re.compile('pass complete').search(play['Description'])) != None:
+        row['G'] = 'p'
+        if (re.compile('TOUCHDOWN').search(play['Description'])) != None:
+            row['AW'] = 'Passing Touchdown'
+        else:
+            row['AW'] = 'Pass Reception'
+    elif (re.compile('pass incomplete').search(play['Description'])) != None:
+        row['G'] = 'p'
+        row['AW'] = 'Pass Incompletion'
+    elif (re.compile('scrambles').search(play['Description'])) != None:
+        row['G'] = 'p'
+        if (re.compile('TOUCHDOWN').search(play['Description'])) != None:
+            row['AW'] = 'Rushing Touchdown'
+        else:
+            row['AW'] = 'Rush'
+    elif (re.compile('rushed').search(play['Description'])) != None:
+        row['G'] = 'r'
+        if (re.compile('TOUCHDOWN').search(play['Description'])) != None:
+            row['AW'] = 'Rushing Touchdown'
+        else:
+            row['AW'] = 'Rush'
+    else:
+        row['G'] = '?'
+    
+    # Output the time stamp in the appropriate columns.
+    timestamp = re.compile('[0-9]*:[0-9][0-9]\s\-\s[0-9]').search(play['Description']).group()
+    min_sec_qtr = re.compile('[0-9]+').findall(timestamp)
+    row['AQ'] = int(min_sec_qtr[2])
+    row['AR'] = int(min_sec_qtr[0])
+    if min_sec_qtr[1][0] == '0':
+        row['AS'] = int(min_sec_qtr[1][-1])
+    else:
+        row['AS'] = int(min_sec_qtr[1])
 
     # extract, distance, and field position.
-    # FIX THIS
     down_dist_fp_str = re.compile('.*[(]').match(play['Description']).group()
     down_dist_fp = re.compile('[0-9][0-9]?').findall(down_dist_fp_str)
     
@@ -84,7 +122,7 @@ def parse_play(play, team):
     try:
         down = down_dist_fp[0]
     except:
-        down = ''
+        down = '?'
     if down == '1':
         row['E'] = '1st'
     elif down == '2':
@@ -111,8 +149,12 @@ def parse_play(play, team):
     if re.compile(team).search(down_dist_fp_str) == None:
         row['AT'] = fp
     else:
-        row['AT'] = 100 -fp
+        row['AT'] = 100-fp
+
+    # Include full play description for reference.
+    row['AX'] = play['Description']
 
     return row
+
 # Use below to test functions, comment out when not needed.
-# drives = scrape_cbs('20230909_IDAHO@NEVADA_CBS.html')
+# scrape_cbs('20230909_IDAHO@NEVADA_CBS.html')
