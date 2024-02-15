@@ -74,7 +74,7 @@ secondary_off = game_data.loc[game_data['Offense']==sec_team].reset_index().drop
 wb = op.load_workbook(filename = 'atq_charting_template.xlsx')
 # print(wb.sheetnames)
 
-#Enter data for primary offense 
+# Enter data for primary offense 
 ws = wb['PRIME Off, SEC Def']
 ws.title = f'{prime_abrev} Offense, {sec_abrev} Defense'
 index = 0

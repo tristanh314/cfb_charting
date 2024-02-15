@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
 import re
+import openpyxl as op
 
 def find_off(drive_table):
     """
@@ -13,47 +14,9 @@ def find_off(drive_table):
     team_tag = drive_table.find('a', class_='')
     team_link = team_tag.get('href')
     team_split = team_link.split('/')
-    team_abbr = team_split[3]
-    return team_abbr
+    team_name = team_split[3]
+    return team_name
 
-def scrape_cbs(html_file):
-    """
-    Input: Relative file path for donwloaded html of college football plays from a game recorded at cbssports.com.
-    Output: Dataframes containing the data for the home team's offensive and defensive plays. 
-    """
-
-    # Store html from the downloaded page as a soup object.
-    page=open(html_file)
-    plays_soup = BeautifulSoup(page.read(), 'html.parser')
-    page.close()
-
-    # Collect a list of drive tables.
-    drive_set = plays_soup.find_all('div', id='TableBase')
-
-    # Read the information from html drive tables into  pandas dataframes.
-    drive_list = []
-
-    for drive in range(0, len(drive_set)):
-        drive_df = pd.DataFrame({'Offense':[],'Result':[],'Description':[]})
-        drive_off = find_off(drive_set[drive])
-        drive_table = drive_set[drive].find('tbody')
-        drive_plays = drive_table.find_all('tr')
-        for index in range(0, len(drive_plays)):
-            play_row = drive_plays[index].find_all('td')
-            play_result = play_row[0].text
-            play_desc = play_row[1].text
-            # down_dist = play_row[1].find('div').text
-            drive_df.loc[len(drive_df.index)] = pd.Series({'Offense':drive_off, 'Result':play_result, 'Description':play_desc})
-        drive_list += [drive_df]
-
-    # Split the plays into two dataframes, one for each team.
-    ######################################################################################
-    # This will need to be refactored to allow the teams to be determined by the script. #
-    ######################################################################################
-    team_A_drive_list = [drive for drive in drive_list if drive['Offense'][0]=='IDAHO']
-    team_B_drive_list = [drive for drive in drive_list if drive['Offense'][0]=='NEVADA']
-    
-    return team_A_drive_list, team_B_drive_list
 
 def parse_play(play, team):
     """
@@ -156,5 +119,93 @@ def parse_play(play, team):
 
     return row
 
+def write_drive(drive_df, ws, t_row):
+    """
+    Input: A dataframe containing drive information formatted to be written into the ATQ charting template, and a worksheet from an open Openpyxl workbook, row number in the worksheet to begin writing to.
+    Output: The row to begin writing information for the next drive to the worksheet. The play information is written to a template .xlsx file.
+    """
+
+    # Write information for each play to the worksheet.
+    index = 0
+    while index < drive_df.shape[0]:
+        play_info = parse_play(drive_df.iloc[index])
+        ws[f'E{t_row}']=play_info['E']
+        ws[f'F{t_row}']=play_info['F']
+        ws[f'G{t_row}']=play_info['G']
+        ws[f'AQ{t_row}']=play_info['AQ']
+        ws[f'AR{t_row}']=play_info['AR']
+        ws[f'AS{t_row}']=play_info['AS']
+        ws[f'AT{t_row}']=play_info['AT']
+        ws[f'AV{t_row}']=play_info['AV']
+        ws[f'AW{t_row}']=play_info['AW']
+        ws[f'AX{t_row}']=play_info['AX']
+        index+=1
+        t_row+=1
+    # Iterate the index so there is blank row in the worksheet after the drive data.
+    t_row+=1
+    return t_row
+
+def scrape_cbs(html_file, xlsx_file):
+    """
+    Input: Relative file path for donwloaded html of college football plays from a game recorded at cbssports.com.
+    Output: The home and away teams. The individual play data is written to a .xlsx file. 
+    """
+
+    # Store html from the downloaded page as a soup object.
+    page=open(html_file)
+    plays_soup = BeautifulSoup(page.read(), 'html.parser')
+    page.close()
+
+    # Determine the names of the teams in the game.
+    home_div = plays_soup.find('div', class_='hud-table-cell team-name-container full home')
+    home_abbr = home_div.find('div', class_='abbr').text
+    home =  re.compile('[A-Z]+').search(home_abbr).group() 
+    away_div = plays_soup.find('div', class_='hud-table-cell team-name-container full away')
+    away_abbr = away_div.find('div', class_='abbr').text
+    away =  re.compile('[A-Z]+').search(away_abbr).group()
+
+    # Collect a list of drive tables.
+    drive_set = plays_soup.find_all('div', id='TableBase')
+
+    # Read the information from html drive tables into pandas dataframes.
+    drive_list = []
+
+    for drive in range(0, len(drive_set)):
+        drive_df = pd.DataFrame({'Offense':[],'Result':[],'Description':[]})
+        drive_off = find_off(drive_set[drive])
+        drive_table = drive_set[drive].find('tbody')
+        drive_plays = drive_table.find_all('tr')
+        for index in range(0, len(drive_plays)):
+            play_row = drive_plays[index].find_all('td')
+            play_result = play_row[0].text
+            play_desc = play_row[1].text
+            drive_df.loc[len(drive_df.index)] = pd.Series({'Offense':drive_off, 'Result':play_result, 'Description':play_desc})
+        drive_list += [drive_df]
+
+    # Split the drives into two lists, one for each team.
+    home_drive_list = [drive for drive in drive_list if drive['Offense'][0] == home]
+    away_drive_list = [drive for drive in drive_list if drive['Offense'][0] == away]
+
+    # Load the template
+    wb = op.load_workbook(filename = 'atq_charting_template.xlsx')
+
+    # Write the data for the home offense.
+    ws = wb['PRIME Off, SEC Def']
+    t_row = 1
+    for drive_df in home_drive_list:
+        write_drive(drive_df, ws, t_row)
+        t_row = drive_df.shape[0]+1
+
+    # Write the data for the home offense.
+    ws = wb['SEC Off, PRIME Def']
+    t_row = 1
+    for drive_df in away_drive_list:
+        write_drive(drive_df, ws, t_row)
+    
+    # Save the new .xlsx file
+    wb.save(xlsx_file)
+    
+    return home, away
+
 # Use below to test functions, comment out when not needed.
-# scrape_cbs('20230909_IDAHO@NEVADA_CBS.html')
+scrape_cbs('20230909_IDAHO@NEVADA_CBS.html', 'test.xlsx')
