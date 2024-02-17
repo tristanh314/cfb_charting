@@ -119,16 +119,32 @@ def parse_play(play, team):
 
     return row
 
-def write_drive(drive_df, ws, t_row):
+def write_drive(drive_df, team, ws, t_row):
     """
     Input: A dataframe containing drive information formatted to be written into the ATQ charting template, and a worksheet from an open Openpyxl workbook, row number in the worksheet to begin writing to.
-    Output: The row to begin writing information for the next drive to the worksheet. The play information is written to a template .xlsx file.
+    Output: The number of rows written to the worksheet. The play information is written to a template .xlsx file.
     """
-
+    # Remove special teams plays
+    for index in range(0,drive_df.shape[0]):
+        if re.compile('kicks').search(drive_df.loc[index]['Description']) != None:
+            drive_df.drop(index,inplace=True)
+        elif re.compile('extra\spoint').search(drive_df.loc[index]['Description']) != None:
+            drive_df.drop(index,inplace=True)
+        elif re.compile('punts').search(drive_df.loc[index]['Description']) != None:
+            drive_df.drop(index,inplace=True)
+        elif re.compile('field\sgoal').search(drive_df.loc[index]['Description']) != None:
+            drive_df.drop(index,inplace=True)
+        else:
+            pass
+    
+    # Reindex the dataframe
+    drive_df.reset_index(inplace=True)
+    drive_df.drop(columns=['index'])
+        
     # Write information for each play to the worksheet.
     index = 0
     while index < drive_df.shape[0]:
-        play_info = parse_play(drive_df.iloc[index])
+        play_info = parse_play(drive_df.iloc[index], team)
         ws[f'E{t_row}']=play_info['E']
         ws[f'F{t_row}']=play_info['F']
         ws[f'G{t_row}']=play_info['G']
@@ -141,9 +157,8 @@ def write_drive(drive_df, ws, t_row):
         ws[f'AX{t_row}']=play_info['AX']
         index+=1
         t_row+=1
-    # Iterate the index so there is blank row in the worksheet after the drive data.
-    t_row+=1
-    return t_row
+
+    return drive_df.shape[0]
 
 def scrape_cbs(html_file, xlsx_file):
     """
@@ -190,18 +205,18 @@ def scrape_cbs(html_file, xlsx_file):
     wb = op.load_workbook(filename = 'atq_charting_template.xlsx')
 
     # Write the data for the home offense.
-    ws = wb['PRIME Off, SEC Def']
-    t_row = 1
+    home_ws = wb['PRIME Off, SEC Def']
+    home_t_row = 1
     for drive_df in home_drive_list:
-        write_drive(drive_df, ws, t_row)
-        t_row = drive_df.shape[0]+1
+        home_t_row+=write_drive(drive_df, home, home_ws, home_t_row)+1
 
     # Write the data for the home offense.
-    ws = wb['SEC Off, PRIME Def']
-    t_row = 1
+    away_ws = wb['SEC Off, PRIME Def']
+    away_t_row = 1
     for drive_df in away_drive_list:
-        write_drive(drive_df, ws, t_row)
-    
+        away_t_row+=write_drive(drive_df, away, away_ws, away_t_row)+1
+        
+        
     # Save the new .xlsx file
     wb.save(xlsx_file)
     
