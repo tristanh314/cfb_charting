@@ -5,6 +5,7 @@ import pandas as pd
 from bs4 import BeautifulSoup
 import re
 import openpyxl as op
+import sys
 
 def find_off(drive_table):
     """
@@ -160,7 +161,7 @@ def write_drive(drive_df, team, ws, t_row):
 
     return drive_df.shape[0]
 
-def scrape_cbs(html_file, xlsx_file):
+def main(html_file, xlsx_file):
     """
     Input: Relative file path for donwloaded html of college football plays from a game recorded at cbssports.com.
     Output: The home and away teams. The individual play data is written to a .xlsx file. 
@@ -222,5 +223,5 @@ def scrape_cbs(html_file, xlsx_file):
     
     return home, away
 
-# Use below to test functions, comment out when not needed.
-scrape_cbs('20230909_IDAHO@NEVADA_CBS.html', 'test.xlsx')
+if __name__ == '__main__':
+    main(sys.argv[1], 'output.xlsx')
