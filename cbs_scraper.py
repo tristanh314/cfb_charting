@@ -224,4 +224,4 @@ def main(html_file, xlsx_file):
     return home, away
 
 if __name__ == '__main__':
-    main(sys.argv[1], 'output.xlsx')
+    main(sys.argv[1], 'scraper_output.xlsx')

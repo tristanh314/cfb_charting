@@ -1,60 +1,80 @@
 import numpy as np
 import pandas as pd
 import openpyxl as op
+import sys
+import re
 
-############# USER INPUT REQUIRED #############
-# INPUT RELATIVE PATH TO RAW DATA
-game_data = pd.read_csv('uo_2024_lib.csv')
-# INPUT RELATIVE PATH TO DESTINATION FILE
-file_name = "or_2023_game_15.xlsx"
-# SPECIFY NAMES AND ABBREVIATIONS TO USE.
-game_num = 15
-prime_team = "Oregon"
-sec_team = "Liberty"
-prime_abrev = "OR"
-sec_abrev  = "LIB"
-######### DID YOU CHECK YOUR CHOICES? #########
+# Determine the names of the teams in the game.
+def find_teams(series):
+    """
+    Input: A series taken from any row in the dataframe read from a .csv download of play data. Typically the first row.
+    Output: The names and abbreviations of the two teams playing the game, may need manual modification.
+    """
+    prime_team = series['Offense']
+    prime_abbr = prime_team[:3]
+    sec_team = series['Defense']
+    sec_abbr = sec_team[:3]
 
-# Remove information that will not be used.
-game_data = game_data.drop(columns=['Id','Offense Conference','Defense Conference','Home','Away','Game Id','Drive Id','Offense Timeouts','Defense Timeouts','Yard Line','Ppa','Wallclock'])
+    return prime_team, prime_abbr, sec_team, sec_abbr
 
-i=0
-frame_length=game_data.shape[0]
-while i < frame_length:
-    if 'Kickoff' in game_data.loc[i]['Play Type']:
-        game_data=game_data.drop(index=i)
-    elif 'Punt' in game_data.loc[i]['Play Type']:
-        game_data=game_data.drop(index=i)
-    elif 'Field Goal' in game_data.loc[i]['Play Type']:
-        game_data=game_data.drop(index=i)
-    elif 'Timeout' in game_data.loc[i]['Play Type']:
-        game_data=game_data.drop(index=i)
-    elif 'End' in game_data.loc[i]['Play Type']:
-        game_data=game_data.drop(index=i)
-    i+=1
-
-# Functions to format information not in the raw stats
-# Make play abreviations
-def abrev(string):
-    if 'Pass' in string:
+def abbrev(string):
+    """
+    Input: A 'Play Type' entry from collegefootballstats.com play data.
+    Output: A one letter abbreviation for the type of play.
+    """
+    if re.compile('Pass').search(string) != None:
         return 'p'
-    elif 'Sack' in string:
+    elif re.compile('Sack').search(string) != None:
         return 'p'
-    elif 'Rush' in string:
+    elif re.compile('Rush').search(string) != None:
         return 'r'
     else:
         return '?'
-# Check for touchdowns
+    
+def filter_plays(plays_df):
+    """
+    Input: A datframe read from a .csv file of college football plays.
+    Output: The input dataframe less all rows that are not an offense running a play against a defense.
+    """
+
+    game_data = plays_df.drop(columns=['Id','Offense Conference','Defense Conference','Home','Away','Game Id','Drive Id','Offense Timeouts','Defense Timeouts','Yard Line','Ppa','Wallclock'])
+
+    i=0
+    frame_length=game_data.shape[0]
+    while i < frame_length:
+        if re.compile('Kickoff').search(game_data.loc[i]['Play Type']) != None:
+            game_data=game_data.drop(index=i, inplace=True)
+        elif re.compile('Punt').search(game_data.loc[i]['Play Type']) != None:
+            game_data=game_data.drop(index=i, inplace=True)
+        elif re.compile('Field Goal').search(game_data.loc[i]['Play Type']) != None:
+            game_data=game_data.drop(index=i, inplace=True)
+        elif re.compile('Timeout').search(game_data.loc[i]['Play Type']) != None:
+            game_data=game_data.drop(index=i, inplace=True)
+        elif re.compile('End').search(game_data.loc[i]['Play Type']) != None:
+            game_data=game_data.drop(index=i, inplace=True)
+        i+=1
+
+    # Create appropriate play abbreviations
+    abreviations = game_data['Play Type'].apply(abbrev)
+    game_data['Play Abrev'] = abreviations
+    
+    return game_data
+
 def is_td(dataframe, index):
-    if 'Touchdown' in dataframe.loc[index]['Play Type']:
+    """
+    Input: A 'Play Type' entry from collegefootballstats.com play data.
+    Output: A 't' if 'Touchdown' is part of the play time, and empty string otherwise.
+    """
+    if re.compile('Touchdown').search(dataframe.loc[index]['Play Type']) != None:
         return 't'
     else:
         return ''
-# Create appropriate play abbreviations
-abreviations = game_data['Play Type'].apply(abrev)
-game_data['Play Abrev'] = abreviations
-# Format strings for down number.
+
 def down_string(down):
+    """
+    Input: An integer represnting the down number.
+    Output: A string representing the down number for data type coherency.
+    """
     if down == 1:
         return '1st'
     elif down == 2:
@@ -66,86 +86,93 @@ def down_string(down):
     else:
         return '?'
 
-# Sort play data by team on offense.
-primary_off = game_data.loc[game_data['Offense']==prime_team].reset_index().drop(columns='index')
-secondary_off = game_data.loc[game_data['Offense']==sec_team].reset_index().drop(columns='index')
+def main(template_file, data_file, output_file):
+    """
+    Input: An .xlsx to use a template to write data, a .csv file with college football play data from collegfootballdata.com, and a name for the .xlsx file to output
+    the written data to.
+    Output: Returns none, saves a copy of the play data written to the .xlsx template.
+    """
+    
+    # Read the data from the .csv data file.
+    plays_df = pd.read_csv(data_file)
 
-# Load the template
-wb = op.load_workbook(filename = 'atq_charting_template.xlsx')
-# print(wb.sheetnames)
+    # Sort play data by team on offense.
+    game_data = filter_plays(plays_df)
+    prim_off, prim_abbr, sec_off, sec_abbr = find_teams(data_file.loc[0])
+    primary_off_df = game_data.loc[game_data['Offense']==prim_off].reset_index().drop(columns='index')
+    secondary_off_df = game_data.loc[game_data['Offense']==sec_off].reset_index().drop(columns='index')
 
-# Enter data for primary offense 
-ws = wb['PRIME Off, SEC Def']
-ws.title = f'{prime_abrev} Offense, {sec_abrev} Defense'
-index = 0
-t_row = 1
-# print(ws)
-while index < primary_off.shape[0]:
-    row = primary_off.iloc[index]
-    ws[f'A{t_row}']=game_num
-    ws[f'B{t_row}']=prime_abrev
-    ws[f'D{t_row}']='O'
-    ws[f'E{t_row}']=down_string(int(row['Down']))
-    ws[f'F{t_row}']=int(row['Distance'])
-    ws[f'G{t_row}']=row['Play Abrev']
-    ws[f'AN{t_row}']=int(row['Offense Score'])
-    ws[f'AO{t_row}']=int(row['Defense Score'])
-    ws[f'AQ{t_row}']=int(row['Period'])
-    ws[f'AR{t_row}']=int(row['Clock Minutes'])
-    ws[f'AS{t_row}']=int(row['Clock Seconds'])
-    ws[f'AT{t_row}']=int(row['Yards To Goal'])
-    ws[f'AV{t_row}']=int(row['Yards Gained'])
-    ws[f'AW{t_row}']=row['Play Type']
-    ws[f'AX{t_row}']=row['Play Text']
-#   Skip rows in necessary
-    if index == primary_off.shape[0]-1:
-        pass
-    elif primary_off.loc[index]['Drive Number'] != primary_off.loc[index+1]['Drive Number']:
-        ws[f'A{t_row+1}']=game_num
-        ws[f'B{t_row+1}']=prime_abrev
-        ws[f'D{t_row+1}']='O'
-        t_row+=2
-    else:
-        t_row+=1
-#   Iterate the index 
-    index+=1
+    # Load the template
+    wb = op.load_workbook(filename = template_file)
 
-#Enter data for secondary offense 
-ws = wb['SEC Off, PRIME Def']
-ws.title = f'{sec_abrev} Offense, {prime_abrev} Defense'
-index = 0
-t_row = 1
-# print(ws)
-while index < secondary_off.shape[0]:
-    row = secondary_off.iloc[index]
-    ws[f'A{t_row}']=game_num
-    ws[f'B{t_row}']=prime_abrev
-    ws[f'D{t_row}']='ddd'
-    ws[f'E{t_row}']=down_string(int(row['Down']))
-    ws[f'F{t_row}']=int(row['Distance'])
-    ws[f'G{t_row}']=row['Play Abrev']
-    ws[f'AN{t_row}']=int(row['Offense Score'])
-    ws[f'AO{t_row}']=int(row['Defense Score'])
-    ws[f'AQ{t_row}']=int(row['Period'])
-    ws[f'AR{t_row}']=int(row['Clock Minutes'])
-    ws[f'AS{t_row}']=int(row['Clock Seconds'])
-    ws[f'AT{t_row}']=int(row['Yards To Goal'])
-    ws[f'AV{t_row}']=int(row['Yards Gained'])
-    ws[f'AW{t_row}']=row['Play Type']
-    ws[f'AX{t_row}']=row['Play Text']
-#   Skip rows in necessary
-    if index == secondary_off.shape[0]-1:
-        pass
-    elif secondary_off.loc[index]['Drive Number'] != secondary_off.loc[index+1]['Drive Number']:
-        ws[f'A{t_row+1}']=game_num
-        ws[f'B{t_row+1}']=prime_abrev
-        ws[f'D{t_row+1}']='ddd'
-        t_row+=2
-    else:
-        t_row+=1
-#   Iterate the index 
-    index+=1
+    # Enter data for primary offense 
+    ws = wb['PRIME Off, SEC Def']
+    ws.title = f'{prim_abbr} Offense, {sec_abbr} Defense'
+    index = 0
+    t_row = 1
+    # print(ws)
+    while index < primary_off_df.shape[0]:
+        row = primary_off_df.loc[index]
+        ws[f'B{t_row}']=prim_abbr
+        ws[f'E{t_row}']=down_string(int(row['Down']))
+        ws[f'F{t_row}']=int(row['Distance'])
+        ws[f'G{t_row}']=row['Play Abrev']
+        ws[f'AN{t_row}']=int(row['Offense Score'])
+        ws[f'AO{t_row}']=int(row['Defense Score'])
+        ws[f'AQ{t_row}']=int(row['Period'])
+        ws[f'AR{t_row}']=int(row['Clock Minutes'])
+        ws[f'AS{t_row}']=int(row['Clock Seconds'])
+        ws[f'AT{t_row}']=int(row['Yards To Goal'])
+        ws[f'AV{t_row}']=int(row['Yards Gained'])
+        ws[f'AW{t_row}']=row['Play Type']
+        ws[f'AX{t_row}']=row['Play Text']
+    #   Skip rows in necessary
+        if index == primary_off_df.shape[0]-1:
+            pass
+        elif primary_off_df.loc[index]['Drive Number'] != primary_off_df.loc[index+1]['Drive Number']:
+            ws[f'B{t_row+1}']=prim_abbr
+            t_row+=2
+        else:
+            t_row+=1
+    #   Iterate the index 
+        index+=1
 
-# Save the modified workbook as .xlsx
-wb.save(file_name)
+    #Enter data for secondary offense 
+    ws = wb['SEC Off, PRIME Def']
+    ws.title = f'{sec_abbr} Offense, {prim_abbr} Defense'
+    index = 0
+    t_row = 1
+    # print(ws)
+    while index < secondary_off_df.shape[0]:
+        row = secondary_off_df.loc[index]
+        ws[f'B{t_row}']=sec_abbr
+        ws[f'E{t_row}']=down_string(int(row['Down']))
+        ws[f'F{t_row}']=int(row['Distance'])
+        ws[f'G{t_row}']=row['Play Abrev']
+        ws[f'AN{t_row}']=int(row['Offense Score'])
+        ws[f'AO{t_row}']=int(row['Defense Score'])
+        ws[f'AQ{t_row}']=int(row['Period'])
+        ws[f'AR{t_row}']=int(row['Clock Minutes'])
+        ws[f'AS{t_row}']=int(row['Clock Seconds'])
+        ws[f'AT{t_row}']=int(row['Yards To Goal'])
+        ws[f'AV{t_row}']=int(row['Yards Gained'])
+        ws[f'AW{t_row}']=row['Play Type']
+        ws[f'AX{t_row}']=row['Play Text']
+    #   Skip rows in necessary
+        if index == secondary_off.shape[0]-1:
+            pass
+        elif secondary_off_df.loc[index]['Drive Number'] != secondary_off_df.loc[index+1]['Drive Number']:
+            ws[f'B{t_row+1}']=sec_abbr
+            t_row+=2
+        else:
+            t_row+=1
+    #   Iterate the index 
+        index+=1
 
+    # Save the modified workbook as .xlsx
+    wb.save(output_file)
+
+    return None
+
+if __name__ == '__main__':
+    main('atq_charting_template.xlsx', sys.argv[1], 'cleaner_output.xlsx')
