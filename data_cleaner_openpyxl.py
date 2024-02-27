@@ -43,21 +43,24 @@ def filter_plays(plays_df):
     frame_length=game_data.shape[0]
     while i < frame_length:
         if re.compile('Kickoff').search(game_data.loc[i]['Play Type']) != None:
-            game_data=game_data.drop(index=i, inplace=True)
+            game_data.drop(index=i, inplace=True)
         elif re.compile('Punt').search(game_data.loc[i]['Play Type']) != None:
-            game_data=game_data.drop(index=i, inplace=True)
+            game_data.drop(index=i, inplace=True)
         elif re.compile('Field Goal').search(game_data.loc[i]['Play Type']) != None:
-            game_data=game_data.drop(index=i, inplace=True)
+            game_data.drop(index=i, inplace=True)
         elif re.compile('Timeout').search(game_data.loc[i]['Play Type']) != None:
-            game_data=game_data.drop(index=i, inplace=True)
+            game_data.drop(index=i, inplace=True)
         elif re.compile('End').search(game_data.loc[i]['Play Type']) != None:
-            game_data=game_data.drop(index=i, inplace=True)
+            game_data.drop(index=i, inplace=True)
         i+=1
 
     # Create appropriate play abbreviations
     abreviations = game_data['Play Type'].apply(abbrev)
     game_data['Play Abrev'] = abreviations
     
+    # Reset the index of the dataframe
+    game_data.reset_index(drop=True, inplace=True)
+
     return game_data
 
 def is_td(dataframe, index):
@@ -98,39 +101,39 @@ def main(template_file, data_file, output_file):
 
     # Sort play data by team on offense.
     game_data = filter_plays(plays_df)
-    prim_off, prim_abbr, sec_off, sec_abbr = find_teams(data_file.loc[0])
-    primary_off_df = game_data.loc[game_data['Offense']==prim_off].reset_index().drop(columns='index')
-    secondary_off_df = game_data.loc[game_data['Offense']==sec_off].reset_index().drop(columns='index')
+    prim_off, prim_abbr, sec_off, sec_abbr = find_teams(game_data.loc[0])
+    primary_off_df = game_data.loc[game_data['Offense']==prim_off].reset_index(drop=True)
+    secondary_off_df = game_data.loc[game_data['Offense']==sec_off].reset_index(drop=True)
 
     # Load the template
     wb = op.load_workbook(filename = template_file)
 
     # Enter data for primary offense 
-    ws = wb['PRIME Off, SEC Def']
-    ws.title = f'{prim_abbr} Offense, {sec_abbr} Defense'
+    ws_1 = wb['PRIME Off, SEC Def']
+    ws_1.title = f'{prim_abbr} Offense, {sec_abbr} Defense'
     index = 0
     t_row = 1
     # print(ws)
     while index < primary_off_df.shape[0]:
         row = primary_off_df.loc[index]
-        ws[f'B{t_row}']=prim_abbr
-        ws[f'E{t_row}']=down_string(int(row['Down']))
-        ws[f'F{t_row}']=int(row['Distance'])
-        ws[f'G{t_row}']=row['Play Abrev']
-        ws[f'AN{t_row}']=int(row['Offense Score'])
-        ws[f'AO{t_row}']=int(row['Defense Score'])
-        ws[f'AQ{t_row}']=int(row['Period'])
-        ws[f'AR{t_row}']=int(row['Clock Minutes'])
-        ws[f'AS{t_row}']=int(row['Clock Seconds'])
-        ws[f'AT{t_row}']=int(row['Yards To Goal'])
-        ws[f'AV{t_row}']=int(row['Yards Gained'])
-        ws[f'AW{t_row}']=row['Play Type']
-        ws[f'AX{t_row}']=row['Play Text']
+        ws_1[f'B{t_row}']=prim_abbr
+        ws_1[f'E{t_row}']=down_string(int(row['Down']))
+        ws_1[f'F{t_row}']=int(row['Distance'])
+        ws_1[f'G{t_row}']=row['Play Abrev']
+        ws_1[f'AN{t_row}']=int(row['Offense Score'])
+        ws_1[f'AO{t_row}']=int(row['Defense Score'])
+        ws_1[f'AQ{t_row}']=int(row['Period'])
+        ws_1[f'AR{t_row}']=int(row['Clock Minutes'])
+        ws_1[f'AS{t_row}']=int(row['Clock Seconds'])
+        ws_1[f'AT{t_row}']=int(row['Yards To Goal'])
+        ws_1[f'AV{t_row}']=int(row['Yards Gained'])
+        ws_1[f'AW{t_row}']=row['Play Type']
+        ws_1[f'AX{t_row}']=row['Play Text']
     #   Skip rows in necessary
         if index == primary_off_df.shape[0]-1:
             pass
         elif primary_off_df.loc[index]['Drive Number'] != primary_off_df.loc[index+1]['Drive Number']:
-            ws[f'B{t_row+1}']=prim_abbr
+            ws_1[f'B{t_row+1}']=prim_abbr
             t_row+=2
         else:
             t_row+=1
@@ -138,31 +141,31 @@ def main(template_file, data_file, output_file):
         index+=1
 
     #Enter data for secondary offense 
-    ws = wb['SEC Off, PRIME Def']
-    ws.title = f'{sec_abbr} Offense, {prim_abbr} Defense'
+    ws_2 = wb['SEC Off, PRIME Def']
+    ws_2.title = f'{sec_abbr} Offense, {prim_abbr} Defense'
     index = 0
     t_row = 1
     # print(ws)
     while index < secondary_off_df.shape[0]:
         row = secondary_off_df.loc[index]
-        ws[f'B{t_row}']=sec_abbr
-        ws[f'E{t_row}']=down_string(int(row['Down']))
-        ws[f'F{t_row}']=int(row['Distance'])
-        ws[f'G{t_row}']=row['Play Abrev']
-        ws[f'AN{t_row}']=int(row['Offense Score'])
-        ws[f'AO{t_row}']=int(row['Defense Score'])
-        ws[f'AQ{t_row}']=int(row['Period'])
-        ws[f'AR{t_row}']=int(row['Clock Minutes'])
-        ws[f'AS{t_row}']=int(row['Clock Seconds'])
-        ws[f'AT{t_row}']=int(row['Yards To Goal'])
-        ws[f'AV{t_row}']=int(row['Yards Gained'])
-        ws[f'AW{t_row}']=row['Play Type']
-        ws[f'AX{t_row}']=row['Play Text']
+        ws_2[f'B{t_row}']=sec_abbr
+        ws_2[f'E{t_row}']=down_string(int(row['Down']))
+        ws_2[f'F{t_row}']=int(row['Distance'])
+        ws_2[f'G{t_row}']=row['Play Abrev']
+        ws_2[f'AN{t_row}']=int(row['Offense Score'])
+        ws_2[f'AO{t_row}']=int(row['Defense Score'])
+        ws_2[f'AQ{t_row}']=int(row['Period'])
+        ws_2[f'AR{t_row}']=int(row['Clock Minutes'])
+        ws_2[f'AS{t_row}']=int(row['Clock Seconds'])
+        ws_2[f'AT{t_row}']=int(row['Yards To Goal'])
+        ws_2[f'AV{t_row}']=int(row['Yards Gained'])
+        ws_2[f'AW{t_row}']=row['Play Type']
+        ws_2[f'AX{t_row}']=row['Play Text']
     #   Skip rows in necessary
-        if index == secondary_off.shape[0]-1:
+        if index == secondary_off_df.shape[0]-1:
             pass
         elif secondary_off_df.loc[index]['Drive Number'] != secondary_off_df.loc[index+1]['Drive Number']:
-            ws[f'B{t_row+1}']=sec_abbr
+            ws_2[f'B{t_row+1}']=sec_abbr
             t_row+=2
         else:
             t_row+=1
