@@ -202,6 +202,7 @@ celerybeat-schedule
 
 # configuration files
 config.py
-config.js
+
 # data files
 *.csv
+chart_cfb/
