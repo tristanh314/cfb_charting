@@ -162,3 +162,6 @@ cython_debug/
 # data files
 *.csv
 /chart_cfb
+have_a_shufti.xlsx
+liberty_season_drives_raw_offense.xlsx
+liberty_season_drives_raw_defense.xlsx
