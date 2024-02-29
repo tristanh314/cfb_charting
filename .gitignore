@@ -162,4 +162,4 @@ cython_debug/
 # data files
 *.csv
 *.html
-/chart_cfb/*
+chart_cfb/*

@@ -1,2 +1,2 @@
 @echo off
-call workon chart_cfb python data_cleaner_openpyxl.py %1
+call "chart_cfb\Scripts\activate" & data_cleaner_openpyxl.py %1
