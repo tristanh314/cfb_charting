@@ -225,3 +225,8 @@ def main(html_file, xlsx_file):
 
 if __name__ == '__main__':
     main(sys.argv[1], 'scraper_output.xlsx')
+
+
+# Playing with getting decoding to go through.
+with open('uw-um.html', 'r', encoding='utf-8', errors='ignore') as plays:
+    plays_soup = BeautifulSoup(plays.read(), 'html.parser')
