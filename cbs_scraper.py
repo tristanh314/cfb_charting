@@ -15,9 +15,8 @@ def find_off(drive_table):
     team_tag = drive_table.find('a', class_='')
     team_link = team_tag.get('href')
     team_split = team_link.split('/')
-    team_name = team_split[3]
+    team_name = team_split[5]
     return team_name
-
 
 def parse_play(play, team):
     """
@@ -168,26 +167,25 @@ def main(html_file, xlsx_file):
     """
 
     # Store html from the downloaded page as a soup object.
-    page=open(html_file)
-    plays_soup = BeautifulSoup(page.read(), 'html.parser')
-    page.close()
+    with open(html_file, 'r', encoding='utf-8', errors='ignore') as plays:
+        plays_soup = BeautifulSoup(plays.read(), 'html.parser')
 
     # Determine the names of the teams in the game.
     home_div = plays_soup.find('div', class_='hud-table-cell team-name-container full home')
     home_abbr = home_div.find('div', class_='abbr').text
-    home =  re.compile('[A-Z]+').search(home_abbr).group() 
+    home =  re.compile('[A-Z]+').search(home_abbr).group()
     away_div = plays_soup.find('div', class_='hud-table-cell team-name-container full away')
     away_abbr = away_div.find('div', class_='abbr').text
     away =  re.compile('[A-Z]+').search(away_abbr).group()
 
     # Collect a list of drive tables.
-    drive_set = plays_soup.find_all('div', id='TableBase')
+    drive_set = plays_soup.find_all('div', id='TableBase', class_="TableBase TableBase-play-by-play")
 
     # Read the information from html drive tables into pandas dataframes.
     drive_list = []
 
     for drive in range(0, len(drive_set)):
-        drive_df = pd.DataFrame({'Offense':[],'Result':[],'Description':[]})
+        drive_df = pd.DataFrame({'Offense':[],'Result':[], 'Description':[]})
         drive_off = find_off(drive_set[drive])
         drive_table = drive_set[drive].find('tbody')
         drive_plays = drive_table.find_all('tr')
@@ -225,8 +223,3 @@ def main(html_file, xlsx_file):
 
 if __name__ == '__main__':
     main(sys.argv[1], 'scraper_output.xlsx')
-
-
-# Playing with getting decoding to go through.
-with open('uw-um.html', 'r', encoding='utf-8', errors='ignore') as plays:
-    plays_soup = BeautifulSoup(plays.read(), 'html.parser')
