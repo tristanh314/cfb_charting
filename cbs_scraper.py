@@ -195,7 +195,7 @@ def main(html_file, xlsx_file):
             play_desc = play_row[1].text
             drive_df.loc[len(drive_df.index)] = pd.Series({'Offense':drive_off, 'Result':play_result, 'Description':play_desc})
         drive_list += [drive_df]
-
+    # AFTER HERE STILL NEEDS REFACTORING
     # Split the drives into two lists, one for each team.
     home_drive_list = [drive for drive in drive_list if drive['Offense'][0] == home]
     away_drive_list = [drive for drive in drive_list if drive['Offense'][0] == away]
