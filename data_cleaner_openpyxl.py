@@ -63,13 +63,22 @@ def filter_plays(plays_df):
 
     return game_data
 
-def is_td(dataframe, index):
+def col_k(play_type, play_text):
     """
-    Input: A 'Play Type' entry from collegefootballstats.com play data.
-    Output: A 't' if 'Touchdown' is part of the play time, and empty string otherwise.
+    Input: The 'Play Type' and 'Play Text' (in order) etnried from a line in the .csv play data from collegefootballstats.
+    Output: An apporpriate one-character code for penalties, touchdowns, turnovers, and two point conversions.
     """
-    if re.compile('Touchdown').search(dataframe.loc[index]['Play Type']) != None:
-        return 't'
+    if re.compile('Touchdown').search(play_type) != None:
+        if re.compile('two-point').search(play_text) != None:
+            return '?'
+        else:
+            return 't'
+    elif re.compile('Interception').search(play_type) != None:
+        return 'x'
+    elif re.compile('Fumble Recovery [()]Opponent[)]').search(play_type) != None:
+        return 'x'
+    elif re.compile('Penalty').search(play_type) != None:
+        return '?'   
     else:
         return ''
 
@@ -120,6 +129,7 @@ def main(template_file, data_file, output_file):
         ws_1[f'E{t_row}']=down_string(int(row['Down']))
         ws_1[f'F{t_row}']=int(row['Distance'])
         ws_1[f'G{t_row}']=row['Play Abrev']
+        ws_1[f'K{t_row}']=col_k(row['Play Type'], row['Play Text'])
         ws_1[f'AN{t_row}']=int(row['Offense Score'])
         ws_1[f'AO{t_row}']=int(row['Defense Score'])
         ws_1[f'AQ{t_row}']=int(row['Period'])
@@ -152,6 +162,7 @@ def main(template_file, data_file, output_file):
         ws_2[f'E{t_row}']=down_string(int(row['Down']))
         ws_2[f'F{t_row}']=int(row['Distance'])
         ws_2[f'G{t_row}']=row['Play Abrev']
+        ws_2[f'K{t_row}']=col_k(row['Play Type'], row['Play Text'])
         ws_2[f'AN{t_row}']=int(row['Offense Score'])
         ws_2[f'AO{t_row}']=int(row['Defense Score'])
         ws_2[f'AQ{t_row}']=int(row['Period'])
