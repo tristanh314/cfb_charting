@@ -14,14 +14,12 @@ def get_teams(row):
     while True:
         prime = input('Team of record: ')
         if row['Offense'] == prime:
-            opponent = row['Defense']
             break
         elif row['Defense'] == prime:
-            opponent = row['Offense']
             break
         else:
             print('Team of record not found, check spelling.')
-    return prime, opponent
+    return prime
 
 def abbrev(string):
     """
@@ -61,12 +59,12 @@ def filter_plays(plays_df):
         i+=1
 
     # Sort the plays by date and time
-    game_data['Date'] = game_data['Wallclock'].apply(lambda x: dt.datetime.strptime(x[0:9], '%Y-%m-%d').date())
+    game_data['Date'] = game_data['Wallclock'].apply(lambda x: dt.datetime.strptime(x[0:10], '%Y-%m-%d').date())
     game_data.drop(columns=['Wallclock'], inplace=True)
     game_data.sort_values(by=['Date', 'Drive Number', 'Play Number'])
 
     # Create appropriate play abbreviations
-    abreviations = game_data['Play Type'].apply(abbrev)
+    abreviations = game_data['Play Type'].appy(abbrev)
     game_data['Play Abrev'] = abreviations
     
     # Reset the index of the dataframe
@@ -109,23 +107,24 @@ def down_string(down):
     else:
         return '?'
 
-def main(template_file, data_file):
+def main(template_file='', data_list=list):
     """
-    Input: An .xlsx to use a template to write data, a .csv file with college football play data from collegfootballdata.com, and a name for the .xlsx file to output
+    Input: Aan .xlsx to use a template to write data, a list of .csv files with college football play data from collegfootballdata.com, and a name for the .xlsx file to output
     the written data to.
     Output: Returns none, saves a copy of the play data written to the .xlsx template.
     """
     # User inputs name of the output file.
     output_file = input('Name of spreasheet to save (leave off file suffix): ')
 
-    # Read the data from the .csv data file.
-    plays_df = pd.read_csv(data_file)
+    # Read the data from the .csv data files, concatenate into a single dataframe, and process the plays.
+    games_list = [pd.read_csv(data_file) for data_file in data_list]
+    combined_games = pd.concat(games_list, ignore_index=True)
+    game_data = filter_plays(combined_games)
 
     # Sort play data by team on offense.
-    game_data = filter_plays(plays_df)
-    prime, opponent = get_teams(game_data.loc[0])
+    prime = get_teams(game_data.loc[0])
     primary_off_df = game_data.loc[game_data['Offense']==prime].reset_index(drop=True)
-    secondary_off_df = game_data.loc[game_data['Offense']==opponent].reset_index(drop=True)
+    secondary_off_df = game_data.loc[game_data['Defense']==prime].reset_index(drop=True)
 
     # Load the template
     wb = op.load_workbook(filename = template_file)
@@ -139,7 +138,7 @@ def main(template_file, data_file):
     while index < primary_off_df.shape[0]:
         row = primary_off_df.loc[index]
         ws_1[f'A{t_row}']=row['Date']
-        ws_1[f'B{t_row}']=opponent
+        ws_1[f'B{t_row}']=row['Defense']
         ws_1[f'E{t_row}']=down_string(int(row['Down']))
         ws_1[f'F{t_row}']=int(row['Distance'])
         ws_1[f'G{t_row}']=row['Play Abrev']
@@ -158,7 +157,7 @@ def main(template_file, data_file):
             pass
         elif primary_off_df.loc[index]['Drive Number'] != primary_off_df.loc[index+1]['Drive Number']:
             ws_1[f'A{t_row+1}']=row['Date']
-            ws_1[f'B{t_row+1}']=opponent
+            ws_1[f'B{t_row+1}']=row['Defense']
             t_row+=2
         else:
             t_row+=1
@@ -174,7 +173,7 @@ def main(template_file, data_file):
     while index < secondary_off_df.shape[0]:
         row = secondary_off_df.loc[index]
         ws_2[f'A{t_row}']=row['Date']
-        ws_2[f'B{t_row}']=opponent
+        ws_2[f'B{t_row}']=row['Offense']
         ws_2[f'E{t_row}']=down_string(int(row['Down']))
         ws_2[f'F{t_row}']=int(row['Distance'])
         ws_2[f'G{t_row}']=row['Play Abrev']
@@ -193,7 +192,7 @@ def main(template_file, data_file):
             pass
         elif secondary_off_df.loc[index]['Drive Number'] != secondary_off_df.loc[index+1]['Drive Number']:
             ws_2[f'A{t_row+1}']=row['Date']
-            ws_2[f'B{t_row+1}']=opponent
+            ws_2[f'B{t_row+1}']=row['Offense']
             t_row+=2
         else:
             t_row+=1
@@ -206,4 +205,4 @@ def main(template_file, data_file):
     return None
 
 if __name__ == '__main__':
-    main('atq_charting_template.xlsx', sys.argv[1])
+    main(template_file='atq_charting_template.xlsx', data_list=sys.argv[1:])

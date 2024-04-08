@@ -1,2 +1,2 @@
 @echo off
-call "chart_cfb\Scripts\activate.bat" & python data_cleaner_openpyxl.py %1
+call "chart_cfb\Scripts\activate.bat" & python data_cleaner_openpyxl.py %*
