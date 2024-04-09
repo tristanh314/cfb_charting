@@ -20,6 +20,18 @@ def get_teams(row):
         else:
             print('Team of record not found, check spelling.')
     return prime
+def get_date(entry):
+    """
+    Input: The entry of the 'Wallclock' column of a .csv file of college football plays.
+    Output: The date, if the entry is formatted correctly, or the first day of the 3rd millenium otherwise.
+    """
+    
+    try:
+        date = dt.datetime.strptime(str(entry)[0:10], '%Y-%m-%d').date()
+    except:
+        date = dt.datetime.strptime('2001-01-01', '%Y-%m-%d').date()
+    
+    return date
 
 def abbrev(string):
     """
@@ -59,16 +71,18 @@ def filter_plays(plays_df):
         i+=1
 
     # Sort the plays by date and time
-    game_data['Date'] = game_data['Wallclock'].apply(lambda x: dt.datetime.strptime(x[0:10], '%Y-%m-%d').date())
-    game_data.drop(columns=['Wallclock'], inplace=True)
-    game_data.sort_values(by=['Date', 'Drive Number', 'Play Number'])
+    game_data.sort_values(by=['Drive Number', 'Play Number'], inplace=True)
 
     # Create appropriate play abbreviations
-    abreviations = game_data['Play Type'].appy(abbrev)
+    abreviations = game_data['Play Type'].apply(abbrev)
     game_data['Play Abrev'] = abreviations
     
     # Reset the index of the dataframe
     game_data.reset_index(drop=True, inplace=True)
+
+    # Enter the date at kickoff into a new column, drop the 'Wallclock' column.
+    game_data['Date'] = pd.Series([get_date(game_data.iloc[0]['Wallclock'])] * (game_data.shape[0]-1))
+    game_data.drop(columns=['Wallclock'], inplace=True)
 
     return game_data
 
@@ -113,18 +127,21 @@ def main(template_file='', data_list=list):
     the written data to.
     Output: Returns none, saves a copy of the play data written to the .xlsx template.
     """
+
     # User inputs name of the output file.
     output_file = input('Name of spreasheet to save (leave off file suffix): ')
 
     # Read the data from the .csv data files, concatenate into a single dataframe, and process the plays.
     games_list = [pd.read_csv(data_file) for data_file in data_list]
-    combined_games = pd.concat(games_list, ignore_index=True)
-    game_data = filter_plays(combined_games)
+    filtered_games = [filter_plays(game) for game in games_list]
+    game_data = pd.concat(filtered_games, ignore_index=True)
 
     # Sort play data by team on offense.
     prime = get_teams(game_data.loc[0])
     primary_off_df = game_data.loc[game_data['Offense']==prime].reset_index(drop=True)
+    primary_off_df.sort_values(by=['Date', 'Drive Number', 'Play Number'], inplace=True)
     secondary_off_df = game_data.loc[game_data['Defense']==prime].reset_index(drop=True)
+    secondary_off_df.sort_values(by=['Date', 'Drive Number', 'Play Number'], inplace=True)
 
     # Load the template
     wb = op.load_workbook(filename = template_file)
