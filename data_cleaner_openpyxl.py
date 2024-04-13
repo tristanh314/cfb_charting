@@ -4,6 +4,7 @@ import openpyxl as op
 import sys
 import re
 import datetime as dt
+import os
 
 # Determine the names of the teams in the game.
 def get_teams(row):
@@ -143,8 +144,22 @@ def main(template_file='', data_list=list):
     secondary_off_df = game_data.loc[game_data['Defense']==prime].reset_index(drop=True)
     secondary_off_df.sort_values(by=['Date', 'Drive Number', 'Play Number'], inplace=True)
 
+    # Insert a single date for each game for both dataframes.
+    date_index = 0
+    dates_dict = {}
+    while date_index < primary_off_df.shape[0]:
+        row = primary_off_df.loc[date_index]
+        if row['Defense'] in dates_dict.keys():
+            date_index+=1
+        else:
+            if row['Date'] == dt.datetime.strptime('2001-01-01', '%Y-%m-%d').date():
+                date_index+=1
+            else:
+                dates_dict[row['Defense']] = row['Date']
+                date_index+=1            
+
     # Load the template
-    wb = op.load_workbook(filename = template_file)
+    wb = op.load_workbook(filename = os.path.normcase(template_file))
 
     # Enter data for primary offense 
     ws_1 = wb['PRIME Off']
@@ -154,7 +169,7 @@ def main(template_file='', data_list=list):
     # print(ws)
     while index < primary_off_df.shape[0]:
         row = primary_off_df.loc[index]
-        ws_1[f'A{t_row}']=row['Date']
+        ws_1[f'A{t_row}']=dates_dict[row['Defense']]
         ws_1[f'B{t_row}']=row['Defense']
         ws_1[f'E{t_row}']=down_string(int(row['Down']))
         ws_1[f'F{t_row}']=int(row['Distance'])
@@ -173,7 +188,7 @@ def main(template_file='', data_list=list):
         if index == primary_off_df.shape[0]-1:
             pass
         elif primary_off_df.loc[index]['Drive Number'] != primary_off_df.loc[index+1]['Drive Number']:
-            ws_1[f'A{t_row+1}']=row['Date']
+            ws_1[f'A{t_row+1}']=dates_dict[row['Defense']]
             ws_1[f'B{t_row+1}']=row['Defense']
             t_row+=2
         else:
@@ -189,7 +204,7 @@ def main(template_file='', data_list=list):
     # print(ws)
     while index < secondary_off_df.shape[0]:
         row = secondary_off_df.loc[index]
-        ws_2[f'A{t_row}']=row['Date']
+        ws_2[f'A{t_row}']=dates_dict[row['Offense']]
         ws_2[f'B{t_row}']=row['Offense']
         ws_2[f'E{t_row}']=down_string(int(row['Down']))
         ws_2[f'F{t_row}']=int(row['Distance'])
@@ -208,7 +223,7 @@ def main(template_file='', data_list=list):
         if index == secondary_off_df.shape[0]-1:
             pass
         elif secondary_off_df.loc[index]['Drive Number'] != secondary_off_df.loc[index+1]['Drive Number']:
-            ws_2[f'A{t_row+1}']=row['Date']
+            ws_2[f'A{t_row+1}']=dates_dict[row['Offense']]
             ws_2[f'B{t_row+1}']=row['Offense']
             t_row+=2
         else:
@@ -217,9 +232,9 @@ def main(template_file='', data_list=list):
         index+=1
 
     # Save the modified workbook as .xlsx
-    wb.save(f'{output_file}.xlsx')
+    wb.save(os.path.normcase(f'{output_file}.xlsx'))
 
     return None
 
 if __name__ == '__main__':
-    main(template_file='atq_charting_template.xlsx', data_list=sys.argv[1:])
+    main(template_file=os.path.normcase('template.xlsx'), data_list=[os.path.normcase(filename) for filename in sys.argv[1:]])
