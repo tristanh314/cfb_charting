@@ -140,11 +140,9 @@ def main(template_file='', data_list=list):
     # Sort play data by team on offense.
     prime = get_teams(game_data.loc[0])
     primary_off_df = game_data.loc[game_data['Offense']==prime].reset_index(drop=True)
-    primary_off_df.sort_values(by=['Date', 'Drive Number', 'Play Number'], inplace=True)
-    secondary_off_df = game_data.loc[game_data['Defense']==prime].reset_index(drop=True)
-    secondary_off_df.sort_values(by=['Date', 'Drive Number', 'Play Number'], inplace=True)
+    secondary_off_df = game_data.loc[game_data['Defense']==prime].reset_index(drop=True) 
 
-    # Insert a single date for each game for both dataframes.
+    # Create a mapper to set a single date for each game.
     date_index = 0
     dates_dict = {}
     while date_index < primary_off_df.shape[0]:
@@ -156,8 +154,14 @@ def main(template_file='', data_list=list):
                 date_index+=1
             else:
                 dates_dict[row['Defense']] = row['Date']
-                date_index+=1            
+                date_index+=1   
 
+    # Insert the single game date and sort the dataframes.
+    primary_off_df['Date'] = primary_off_df['Defense'].map(dates_dict)
+    primary_off_df.sort_values(by=['Date', 'Drive Number', 'Play Number'], ignore_index=True, inplace=True)
+    secondary_off_df['Date'] = secondary_off_df['Offense'].map(dates_dict)
+    secondary_off_df.sort_values(by=['Date', 'Drive Number', 'Play Number'], ignore_index=True, inplace=True)  
+   
     # Load the template
     wb = op.load_workbook(filename = os.path.normcase(template_file))
 
@@ -169,7 +173,7 @@ def main(template_file='', data_list=list):
     # print(ws)
     while index < primary_off_df.shape[0]:
         row = primary_off_df.loc[index]
-        ws_1[f'A{t_row}']=dates_dict[row['Defense']]
+        ws_1[f'A{t_row}']=row['Date']
         ws_1[f'B{t_row}']=row['Defense']
         ws_1[f'E{t_row}']=down_string(int(row['Down']))
         ws_1[f'F{t_row}']=int(row['Distance'])
@@ -188,7 +192,7 @@ def main(template_file='', data_list=list):
         if index == primary_off_df.shape[0]-1:
             pass
         elif primary_off_df.loc[index]['Drive Number'] != primary_off_df.loc[index+1]['Drive Number']:
-            ws_1[f'A{t_row+1}']=dates_dict[row['Defense']]
+            ws_1[f'A{t_row+1}']=row['Date']
             ws_1[f'B{t_row+1}']=row['Defense']
             t_row+=2
         else:
@@ -204,7 +208,7 @@ def main(template_file='', data_list=list):
     # print(ws)
     while index < secondary_off_df.shape[0]:
         row = secondary_off_df.loc[index]
-        ws_2[f'A{t_row}']=dates_dict[row['Offense']]
+        ws_2[f'A{t_row}']=row['Date']
         ws_2[f'B{t_row}']=row['Offense']
         ws_2[f'E{t_row}']=down_string(int(row['Down']))
         ws_2[f'F{t_row}']=int(row['Distance'])
@@ -223,7 +227,7 @@ def main(template_file='', data_list=list):
         if index == secondary_off_df.shape[0]-1:
             pass
         elif secondary_off_df.loc[index]['Drive Number'] != secondary_off_df.loc[index+1]['Drive Number']:
-            ws_2[f'A{t_row+1}']=dates_dict[row['Offense']]
+            ws_2[f'A{t_row+1}']=row['Date']
             ws_2[f'B{t_row+1}']=row['Offense']
             t_row+=2
         else:
