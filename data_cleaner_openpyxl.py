@@ -4,7 +4,7 @@ import openpyxl as op
 import sys
 import re
 import datetime as dt
-import os
+from pathlib import Path
 
 # Determine the names of the teams in the game.
 def get_teams(row):
@@ -21,6 +21,7 @@ def get_teams(row):
         else:
             print('Team of record not found, check spelling.')
     return prime
+
 def get_date(entry):
     """
     Input: The entry of the 'Wallclock' column of a .csv file of college football plays.
@@ -34,20 +35,60 @@ def get_date(entry):
     
     return date
 
-def abbrev(string):
+def abbrev(row):
     """
-    Input: A 'Play Type' entry from collegefootballstats.com play data.
+    Input: A row of play data from collegefootballstats.com.
     Output: A one letter abbreviation for the type of play.
     """
-    if re.compile('Pass').search(string) != None:
+    if re.compile('Two-point Conversion').search(row['Play Text']) != None:
+        return '?'
+    elif re.compile('Fumble').search(row['Play Type']) != None:
+        return '?'
+    elif re.compile('Interception').search(row['Play Type']) != None:
         return 'p'
-    elif re.compile('Sack').search(string) != None:
+    elif re.compile('Pass').search(row['Play Type']) != None:
         return 'p'
-    elif re.compile('Rush').search(string) != None:
+    elif re.compile('Sack').search(row['Play Type']) != None:
+        return 'p'
+    elif re.compile('Rush').search(row['Play Type']) != None:
         return 'r'
     else:
         return '?'
     
+def col_k(row):
+    """
+    Input: The 'Play Type' and 'Play Text' (in order) etnries from a line in the .csv play data from collegefootballstats.
+    Output: An apporpriate one-character code for penalties, touchdowns, turnovers, and two point conversions.
+    """
+    if re.compile('Interception').search(row['Play Type']) != None:
+        row['Yards Gained']=0
+        return 'x'
+    elif re.compile('Fumble Recovery [()]Opponent[)]').search(row['Play Type']) != None:
+        row['Yard Gained']=0
+        return 'x'   
+    elif re.compile('Safety').search(row['Play Type']) !=None:
+        return 'x'
+    elif re.compile('Touchdown').search(row['Play Type']) != None:
+        return 't'
+    else:
+        return ''
+
+def down_string(down):
+    """
+    Input: An integer represnting the down number.
+    Output: A string representing the down number for data type coherency.
+    """
+    if down == '1':
+        return '1st'
+    elif down == '2':
+        return '2nd'
+    elif down == '3':
+        return '3rd'
+    elif down == '4':
+        return '4th'
+    else:
+        return '?'
+
 def filter_plays(plays_df):
     """
     Input: A datframe read from a .csv file of college football plays.
@@ -71,12 +112,20 @@ def filter_plays(plays_df):
             game_data.drop(index=i, inplace=True)
         i+=1
 
-    # Sort the plays by date and time
+    # Sort the plays by order in game
     game_data.sort_values(by=['Drive Number', 'Play Number'], inplace=True)
 
     # Create appropriate play abbreviations
-    abreviations = game_data['Play Type'].apply(abbrev)
+    abreviations = game_data.apply(abbrev, axis='columns')
     game_data['Play Abrev'] = abreviations
+
+    # Enter the down as the proper string
+    down_strings = game_data['Down'].apply(down_string)
+    game_data['Down'] = down_strings
+
+    # Enter the proper annotations for column K
+    annotations = game_data.apply(col_k)
+    game_data['Annotations'] = annotations
     
     # Reset the index of the dataframe
     game_data.reset_index(drop=True, inplace=True)
@@ -86,41 +135,6 @@ def filter_plays(plays_df):
     game_data.drop(columns=['Wallclock'], inplace=True)
 
     return game_data
-
-def col_k(play_type, play_text):
-    """
-    Input: The 'Play Type' and 'Play Text' (in order) etnried from a line in the .csv play data from collegefootballstats.
-    Output: An apporpriate one-character code for penalties, touchdowns, turnovers, and two point conversions.
-    """
-    if re.compile('Touchdown').search(play_type) != None:
-        if re.compile('two-point').search(play_text) != None:
-            return '?'
-        else:
-            return 't'
-    elif re.compile('Interception').search(play_type) != None:
-        return 'x'
-    elif re.compile('Fumble Recovery [()]Opponent[)]').search(play_type) != None:
-        return 'x'
-    elif re.compile('Penalty').search(play_type) != None:
-        return '?'   
-    else:
-        return ''
-
-def down_string(down):
-    """
-    Input: An integer represnting the down number.
-    Output: A string representing the down number for data type coherency.
-    """
-    if down == 1:
-        return '1st'
-    elif down == 2:
-        return '2nd'
-    elif down == 3:
-        return '3rd'
-    elif down == 4:
-        return '4th'
-    else:
-        return '?'
 
 def main(template_file='', data_list=list):
     """
@@ -163,7 +177,7 @@ def main(template_file='', data_list=list):
     secondary_off_df.sort_values(by=['Date', 'Drive Number', 'Play Number'], ignore_index=True, inplace=True)  
    
     # Load the template
-    wb = op.load_workbook(filename = os.path.normcase(template_file))
+    wb = op.load_workbook(filename = Path(template_file))
 
     # Enter data for primary offense 
     ws_1 = wb['PRIME Off']
@@ -178,7 +192,7 @@ def main(template_file='', data_list=list):
         ws_1[f'E{t_row}']=down_string(int(row['Down']))
         ws_1[f'F{t_row}']=int(row['Distance'])
         ws_1[f'G{t_row}']=row['Play Abrev']
-        ws_1[f'K{t_row}']=col_k(row['Play Type'], row['Play Text'])
+        ws_1[f'K{t_row}']=col_k(row)
         ws_1[f'AN{t_row}']=int(row['Offense Score'])
         ws_1[f'AO{t_row}']=int(row['Defense Score'])
         ws_1[f'AQ{t_row}']=int(row['Period'])
@@ -213,7 +227,7 @@ def main(template_file='', data_list=list):
         ws_2[f'E{t_row}']=down_string(int(row['Down']))
         ws_2[f'F{t_row}']=int(row['Distance'])
         ws_2[f'G{t_row}']=row['Play Abrev']
-        ws_2[f'K{t_row}']=col_k(row['Play Type'], row['Play Text'])
+        ws_2[f'K{t_row}']=col_k(row)
         ws_2[f'AN{t_row}']=int(row['Offense Score'])
         ws_2[f'AO{t_row}']=int(row['Defense Score'])
         ws_2[f'AQ{t_row}']=int(row['Period'])
@@ -236,9 +250,9 @@ def main(template_file='', data_list=list):
         index+=1
 
     # Save the modified workbook as .xlsx
-    wb.save(os.path.normcase(f'{output_file}.xlsx'))
+    wb.save(Path(f'{output_file}.xlsx'))
 
     return None
 
 if __name__ == '__main__':
-    main(template_file=os.path.normcase('template.xlsx'), data_list=[os.path.normcase(filename) for filename in sys.argv[1:]])
+    main(template_file=Path('template.xlsx'), data_list=[Path(filename) for filename in sys.argv[1:]])
