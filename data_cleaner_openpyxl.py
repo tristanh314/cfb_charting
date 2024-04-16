@@ -55,36 +55,36 @@ def abbrev(row):
     else:
         return '?'
     
-def col_k(row):
+def annotate(row):
     """
     Input: The 'Play Type' and 'Play Text' (in order) etnries from a line in the .csv play data from collegefootballstats.
-    Output: An apporpriate one-character code for penalties, touchdowns, turnovers, and two point conversions.
+    Output: The row properly modified and annotated for exceptional plays.
     """
     if re.compile('Interception').search(row['Play Type']) != None:
-        row['Yards Gained']=0
-        return 'x'
+        row['Yards Gained'] = 0
+        row['Annotations'] = 'x'
     elif re.compile('Fumble Recovery [()]Opponent[)]').search(row['Play Type']) != None:
-        row['Yard Gained']=0
-        return 'x'   
+        row['Yards Gained'] = 0
+        row['Annotations'] = 'x'   
     elif re.compile('Safety').search(row['Play Type']) !=None:
-        return 'x'
+        row['Annotations'] = 'x'
     elif re.compile('Touchdown').search(row['Play Type']) != None:
-        return 't'
-    else:
-        return ''
+       row['Annotations'] = 't'        
+
+    return row
 
 def down_string(down):
     """
     Input: An integer represnting the down number.
     Output: A string representing the down number for data type coherency.
     """
-    if down == '1':
+    if int(down) == 1:
         return '1st'
-    elif down == '2':
+    elif int(down) == 2:
         return '2nd'
-    elif down == '3':
+    elif int(down) == 3:
         return '3rd'
-    elif down == '4':
+    elif int(down) == 4:
         return '4th'
     else:
         return '?'
@@ -123,9 +123,9 @@ def filter_plays(plays_df):
     down_strings = game_data['Down'].apply(down_string)
     game_data['Down'] = down_strings
 
-    # Enter the proper annotations for column K
-    annotations = game_data.apply(col_k)
-    game_data['Annotations'] = annotations
+    # Enter a placeholder column for column K in the spreadsheet.
+    game_data['Annotations'] = [''] * game_data.shape[0]
+    game_data = game_data.apply(annotate, axis='columns') 
     
     # Reset the index of the dataframe
     game_data.reset_index(drop=True, inplace=True)
@@ -189,10 +189,10 @@ def main(template_file='', data_list=list):
         row = primary_off_df.loc[index]
         ws_1[f'A{t_row}']=row['Date']
         ws_1[f'B{t_row}']=row['Defense']
-        ws_1[f'E{t_row}']=down_string(int(row['Down']))
+        ws_1[f'E{t_row}']=(row['Down'])
         ws_1[f'F{t_row}']=int(row['Distance'])
         ws_1[f'G{t_row}']=row['Play Abrev']
-        ws_1[f'K{t_row}']=col_k(row)
+        ws_1[f'K{t_row}']=row['Annotations']
         ws_1[f'AN{t_row}']=int(row['Offense Score'])
         ws_1[f'AO{t_row}']=int(row['Defense Score'])
         ws_1[f'AQ{t_row}']=int(row['Period'])
@@ -224,10 +224,10 @@ def main(template_file='', data_list=list):
         row = secondary_off_df.loc[index]
         ws_2[f'A{t_row}']=row['Date']
         ws_2[f'B{t_row}']=row['Offense']
-        ws_2[f'E{t_row}']=down_string(int(row['Down']))
+        ws_2[f'E{t_row}']=row['Down']
         ws_2[f'F{t_row}']=int(row['Distance'])
         ws_2[f'G{t_row}']=row['Play Abrev']
-        ws_2[f'K{t_row}']=col_k(row)
+        ws_2[f'K{t_row}']=row['Annotations']
         ws_2[f'AN{t_row}']=int(row['Offense Score'])
         ws_2[f'AO{t_row}']=int(row['Defense Score'])
         ws_2[f'AQ{t_row}']=int(row['Period'])
