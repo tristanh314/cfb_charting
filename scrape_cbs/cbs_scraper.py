@@ -201,16 +201,16 @@ def main(html_file, xlsx_file):
     away_drive_list = [drive for drive in drive_list if drive['Offense'][0] == away]
 
     # Load the template
-    wb = op.load_workbook(filename = 'atq_charting_template.xlsx')
+    wb = op.load_workbook(filename = 'template.xlsx')
 
     # Write the data for the home offense.
-    home_ws = wb['PRIME Off, SEC Def']
+    home_ws = wb['PRIME Off']
     home_t_row = 1
     for drive_df in home_drive_list:
         home_t_row+=write_drive(drive_df, home, home_ws, home_t_row)+1
 
     # Write the data for the home offense.
-    away_ws = wb['SEC Off, PRIME Def']
+    away_ws = wb['PRIME Def']
     away_t_row = 1
     for drive_df in away_drive_list:
         away_t_row+=write_drive(drive_df, away, away_ws, away_t_row)+1
