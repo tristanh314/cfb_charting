@@ -6,21 +6,21 @@ from bs4 import BeautifulSoup
 import re
 import openpyxl as op
 import sys
+import glob
+from pathlib import Path
 
 def find_off(drive_table):
     """
     Input: A BeautifulSoup object corresponding to a table of play information for a single drive from CBS cfb play-by-play.
     Output: The abbreviation of the team that is on offense during the drive in question.
     """
-    team_tag = drive_table.find('a', class_='')
-    team_link = team_tag.get('href')
-    team_split = team_link.split('/')
-    team_name = team_split[5]
-    return team_name
+    team_header = drive_table.find('span', class_='TeamName')
+    team = team_header.text
+    return team
 
 def parse_play(play, team):
     """
-    Input: A dataframe of plays for a single team, eg, output of scrape_cbs.
+    Input: A dataframe of plays for a single team scraped from cbs.com.
     Output: A dataframe of values that can be written to an ATQ charting template.
     """
 
@@ -39,11 +39,13 @@ def parse_play(play, team):
     elif (re.compile('Penalty').search(play['Result'])) != None:
         row['AV'] = np.NaN
         row['AW'] = 'Penalty'
-    elif (re.compile('Sack').search(play['Result'])) != None:
+    elif (re.compile('sacked').search(play['Result'])) != None:
         row['AV'] = int(re.compile('for \-[0-9]*').search(play['Description']).group()[4:])
-    
+
     # Determine the play type.
-    if (re.compile('pass complete').search(play['Description'])) != None:
+    if (re.compile('TWO-POINT').search(play['Description'])) != None:
+        row['G'] = '?'
+    elif (re.compile('pass complete').search(play['Description'])) != None:
         row['G'] = 'p'
         if (re.compile('TOUCHDOWN').search(play['Description'])) != None:
             row['AW'] = 'Passing Touchdown'
@@ -58,6 +60,9 @@ def parse_play(play, team):
             row['AW'] = 'Rushing Touchdown'
         else:
             row['AW'] = 'Rush'
+    elif (re.compile('sacked').search(play['Description'])) != None:
+        row['G'] = 'p'
+        row['AW'] = 'Sack'
     elif (re.compile('rushed').search(play['Description'])) != None:
         row['G'] = 'r'
         if (re.compile('TOUCHDOWN').search(play['Description'])) != None:
@@ -66,7 +71,7 @@ def parse_play(play, team):
             row['AW'] = 'Rush'
     else:
         row['G'] = '?'
-    
+
     # Output the time stamp in the appropriate columns.
     timestamp = re.compile('[0-9]*:[0-9][0-9]\s\-\s[0-9]').search(play['Description']).group()
     min_sec_qtr = re.compile('[0-9]+').findall(timestamp)
@@ -80,7 +85,7 @@ def parse_play(play, team):
     # extract, distance, and field position.
     down_dist_fp_str = re.compile('.*[(]').match(play['Description']).group()
     down_dist_fp = re.compile('[0-9][0-9]?').findall(down_dist_fp_str)
-    
+
     # Write the down in the proper output format.
     try:
         down = down_dist_fp[0]
@@ -95,7 +100,7 @@ def parse_play(play, team):
     elif down == '4':
         row['E'] = '4th'
     else:
-        row['E'] = '?'
+        row['E'] = 'C'
 
     # Write the distance in the proper output format.
     try:
@@ -119,7 +124,7 @@ def parse_play(play, team):
 
     return row
 
-def write_drive(drive_df, team, ws, t_row):
+def write_drive(drive_df, prime, week, team, ws, t_row):
     """
     Input: A dataframe containing drive information formatted to be written into the ATQ charting template, and a worksheet from an open Openpyxl workbook, row number in the worksheet to begin writing to.
     Output: The number of rows written to the worksheet. The play information is written to a template .xlsx file.
@@ -136,15 +141,17 @@ def write_drive(drive_df, team, ws, t_row):
             drive_df.drop(index,inplace=True)
         else:
             pass
-    
+
     # Reindex the dataframe
     drive_df.reset_index(inplace=True)
     drive_df.drop(columns=['index'])
-        
+
     # Write information for each play to the worksheet.
     index = 0
     while index < drive_df.shape[0]:
         play_info = parse_play(drive_df.iloc[index], team)
+        ws[f'A{t_row}']=week
+        ws[f'B{t_row}']=prime
         ws[f'E{t_row}']=play_info['E']
         ws[f'F{t_row}']=play_info['F']
         ws[f'G{t_row}']=play_info['G']
@@ -158,12 +165,16 @@ def write_drive(drive_df, team, ws, t_row):
         index+=1
         t_row+=1
 
+    # Write week and team information to blank row
+    ws[f'A{t_row}']=week
+    ws[f'B{t_row}']=prime
+    
     return drive_df.shape[0]
 
-def main(html_file, xlsx_file):
+def main(html_file, template_file):
     """
-    Input: Relative file path for donwloaded html of college football plays from a game recorded at cbssports.com.
-    Output: The home and away teams. The individual play data is written to a .xlsx file. 
+    Input: Relative file path for downloaded html of college football plays from a game recorded at cbssports.com.
+    Output: None. The individual play data is written to an .xlsx file.
     """
 
     # Store html from the downloaded page as a soup object.
@@ -178,6 +189,19 @@ def main(html_file, xlsx_file):
     away_abbr = away_div.find('div', class_='abbr').text
     away =  re.compile('[A-Z]+').search(away_abbr).group()
 
+    # User inputs the abbreviation for the team of record.
+    while True:
+        prime = input('Team of record (use abbreviation as listed in the yard lines in the CBS table): ')
+        if prime == home:
+            sec = away
+            break
+        elif prime == away:
+            sec = home
+            break
+        else:
+            print('Team of record not found, check spelling.')
+    week = input('Game week: ')
+    
     # Collect a list of drive tables.
     drive_set = plays_soup.find_all('div', id='TableBase', class_="TableBase TableBase-play-by-play")
 
@@ -195,31 +219,30 @@ def main(html_file, xlsx_file):
             play_desc = play_row[1].text
             drive_df.loc[len(drive_df.index)] = pd.Series({'Offense':drive_off, 'Result':play_result, 'Description':play_desc})
         drive_list += [drive_df]
-    # AFTER HERE STILL NEEDS REFACTORING
     # Split the drives into two lists, one for each team.
-    home_drive_list = [drive for drive in drive_list if drive['Offense'][0] == home]
-    away_drive_list = [drive for drive in drive_list if drive['Offense'][0] == away]
+    prime_drive_list = [drive for drive in drive_list if drive['Offense'][0] == prime]
+    sec_drive_list = [drive for drive in drive_list if drive['Offense'][0]!= prime]
 
     # Load the template
-    wb = op.load_workbook(filename = 'template.xlsx')
+    wb = op.load_workbook(filename = template_file)
 
-    # Write the data for the home offense.
-    home_ws = wb['PRIME Off']
-    home_t_row = 1
-    for drive_df in home_drive_list:
-        home_t_row+=write_drive(drive_df, home, home_ws, home_t_row)+1
+    # Write the data for the prime offense.
+    prime_ws = wb['PRIME Off']
+    prime_t_row = 1
+    for drive_df in prime_drive_list:
+        prime_t_row+=write_drive(drive_df, prime, week, prime, prime_ws, prime_t_row)+1
 
-    # Write the data for the home offense.
-    away_ws = wb['PRIME Def']
-    away_t_row = 1
-    for drive_df in away_drive_list:
-        away_t_row+=write_drive(drive_df, away, away_ws, away_t_row)+1
-        
-        
+    # Write the data for the secondary offense.
+    sec_ws = wb['PRIME Def']
+    sec_t_row = 1
+    for drive_df in sec_drive_list:
+        sec_t_row+=write_drive(drive_df, prime, week, sec, sec_ws, sec_t_row)+1
+
     # Save the new .xlsx file
-    wb.save(xlsx_file)
-    
-    return home, away
+    output_file = input('Name of spreasheet to save (leave off file suffix): ')
+    wb.save(f'{output_file}.xlsx')
+
+    return
 
 if __name__ == '__main__':
-    main(sys.argv[1], 'scraper_output.xlsx')
+    main(sys.argv[1], 'template.xlsx')

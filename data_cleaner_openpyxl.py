@@ -138,7 +138,7 @@ def filter_plays(plays_df):
 
 def main(template_file='', data_list=list):
     """
-    Input: Aan .xlsx to use a template to write data, a list of .csv files with college football play data from collegfootballdata.com, and a name for the .xlsx file to output
+    Input: An .xlsx to use a template to write data, a list of .csv files with college football play data from collegfootballdata.com, and a name for the .xlsx file to output
     the written data to.
     Output: Returns none, saves a copy of the play data written to the .xlsx template.
     """
